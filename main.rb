@@ -1,14 +1,15 @@
 require 'optparse'
 require 'fileutils'
 command = ARGV.shift
+NAME = 'stolen-git'
 def print_usage
-  usage_error_message = "Usage: stolen-git <command> [options]
+  usage_error_message = "Usage: #{NAME} <command> [options]
 
   Commands:\n"
   commands_docs = {
     commit: 'Save changes',
     reset: 'Revert to commit',
-    init: 'Initialize stolen-git to start tracking'
+    init: "Initialize #{NAME} to start tracking"
   }
   max_len = 0
   commands_docs.each_key do |command|
@@ -21,23 +22,26 @@ def print_usage
   puts usage_error_message
 end
 
-def initialize
-  if File.exist?('.stolen-git')
+# Rechange to initalize later when in a class
+def p_initialize
+  # Check if already initialized
+  if File.exist?(".#{NAME}")
     loop do
-      print 'An instance of stolen-git is already up here do you want to replace it (y/n): '
+      print "An instance of #{NAME} is already up here do you want to replace it (y/n): "
       replace_user_input = gets.chomp.downcase
       case replace_user_input
       when 'y'
         loop do
-          print 'THIS WILL DELETE ALL COMMITS AND INSTANCES OF STOLEN-GIT. ARE YOU SURE (y/n): '
+          # Get confirmation
+          print "THIS WILL DELETE ALL COMMITS AND INSTANCES OF #{NAME}. ARE YOU SURE (y/n): "
           confirmation_user_input = gets.chomp.downcase
           case confirmation_user_input
           when 'y'
-            FileUtils.rm_rf('.stolen-git')
-            if File.exist?('.stolen-git')
-              puts 'An error occured during the deletion process of the old directory of stolen-git'
+            FileUtils.rm_rf(".#{NAME}")
+            if File.exist?(".#{NAME}")
+              puts "An error occured during the deletion process of the old directory of #{NAME}"
             else
-              initialize
+              p_initialize
             end
             break
           when 'n'
@@ -55,16 +59,18 @@ def initialize
         puts 'wrong input only enter y/n'
       end
     end
-  else
-    Dir.mkdir('.stolen-git')
 
+  else
+    FileUtils.mkdir(".#{NAME}")
+    # TODO: add form for project_info
+    File.write(".#{NAME}/project_info.json", {})
   end
 end
 
 case command
 when 'init'
-  initialize
-  puts 'Stolen-git initzlized Sucessfully :D'
+  p_initialize
+  puts "#{NAME.capitalize} initialized Sucessfully :D"
 
 when 'commit'
   puts 'Committing changes...'

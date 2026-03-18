@@ -65,7 +65,6 @@ def p_initialize
     FileUtils.mkdir_p(".#{NAME}/commits")
     # TODO: add form for project_info
     File.write(".#{NAME}/project_info.json", {})
-    File.write(".#{NAME}/commits.json", [])
   end
 end
 

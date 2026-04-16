@@ -41,8 +41,8 @@ end
 def p_initialize
   # Check if already initialized
   if File.exist?('.stolen-git')
-    if confirm?('An instance of stolen-git is already up here do you want to replace it (y/n): ')
-      if confirm?('THIS WILL DELETE ALL COMMITS AND INSTANCES OF stolen-git. ARE YOU SURE (y/n): ')
+    if confirm?('An instance of stolen-git is already up here do you want to replace it')
+      if confirm?('THIS WILL DELETE ALL COMMITS AND INSTANCES OF stolen-git. ARE YOU SURE')
         FileUtils.rm_rf('.stolen-git')
 
         if File.exist?('.stolen-git')
@@ -53,6 +53,8 @@ def p_initialize
       else
         puts 'ok'
       end
+    else
+      puts 'ok'
     end
 
   else
@@ -61,13 +63,14 @@ def p_initialize
     # TODO: add form for project_info
     File.write('.stolen-git/project_info.json', {})
     File.write('.stolen-git/commits.json', [])
+
+    puts "#{NAME.capitalize} initialized Sucessfully :D"
   end
 end
 
 case command
 when 'init'
   p_initialize
-  puts "#{NAME.capitalize} initialized Sucessfully :D"
 
 when 'commit'
   puts 'Committing changes...'

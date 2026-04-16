@@ -3,13 +3,13 @@ require 'fileutils'
 command = ARGV.shift
 NAME = 'stolen-git'
 def print_usage
-  usage_error_message = "Usage: #{NAME} <command> [options]
+  usage_error_message = "Usage: stolen-git <command> [options]
 
   Commands:\n"
   commands_docs = {
     commit: 'Save changes',
     reset: 'Revert to commit',
-    init: "Initialize #{NAME} to start tracking"
+    init: 'Initialize stolen-git to start tracking'
   }
   max_len = 0
   commands_docs.each_key do |command|
@@ -23,49 +23,44 @@ def print_usage
 end
 
 # Rechange to initalize later when in a class
+def confirm?(prompt)
+  loop do
+    print "#{prompt} (y/n): "
+    input = gets.chomp.downcase
+    case input
+    when 'y'
+      return true
+    when 'n'
+      return false
+    else
+      puts 'wrong input only enter y/n'
+    end
+  end
+end
+
 def p_initialize
   # Check if already initialized
-  if File.exist?(".#{NAME}")
-    loop do
-      print "An instance of #{NAME} is already up here do you want to replace it (y/n): "
-      replace_user_input = gets.chomp.downcase
-      case replace_user_input
-      when 'y'
-        loop do
-          # Get confirmation
-          print "THIS WILL DELETE ALL COMMITS AND INSTANCES OF #{NAME}. ARE YOU SURE (y/n): "
-          confirmation_user_input = gets.chomp.downcase
-          case confirmation_user_input
-          when 'y'
-            FileUtils.rm_rf(".#{NAME}")
-            if File.exist?(".#{NAME}")
-              puts "An error occured during the deletion process of the old directory of #{NAME}"
-            else
-              p_initialize
-            end
-            break
-          when 'n'
-            puts 'ok'
-            break
-          else
-            puts 'wrong input only enter y/n'
-          end
+  if File.exist?('.stolen-git')
+    if confirm?('An instance of stolen-git is already up here do you want to replace it (y/n): ')
+      if confirm?('THIS WILL DELETE ALL COMMITS AND INSTANCES OF stolen-git. ARE YOU SURE (y/n): ')
+        FileUtils.rm_rf('.stolen-git')
+
+        if File.exist?('.stolen-git')
+          puts 'An error occured during the deletion process of the old directory of stolen-git'
+        else
+          p_initialize
         end
-        break
-      when 'n'
-        puts 'ok'
-        break
       else
-        puts 'wrong input only enter y/n'
+        puts 'ok'
       end
     end
 
   else
-    FileUtils.mkdir_p(".#{NAME}")
-    FileUtils.mkdir_p(".#{NAME}/commits")
+    FileUtils.mkdir_p('.stolen-git')
+    FileUtils.mkdir_p('.stolen-git/commits')
     # TODO: add form for project_info
-    File.write(".#{NAME}/project_info.json", {})
-    File.write(".#{NAME}/commits.json", [])
+    File.write('.stolen-git/project_info.json', {})
+    File.write('.stolen-git/commits.json', [])
   end
 end
 

@@ -1,5 +1,8 @@
 require 'optparse'
 require 'fileutils'
+require 'digest'
+require 'json'
+
 command = ARGV.shift
 NAME = 'stolen-git'
 def print_usage
@@ -22,7 +25,6 @@ def print_usage
   puts usage_error_message
 end
 
-# Rechange to initalize later when in a class
 def confirm?(prompt)
   loop do
     print "#{prompt} (y/n): "
@@ -60,11 +62,49 @@ def p_initialize
   else
     FileUtils.mkdir_p('.stolen-git')
     FileUtils.mkdir_p('.stolen-git/commits')
-    # TODO: add form for project_info
+
+    FileUtils.mkdir_p('.stolen-git/last')
+    FileUtils.write('.stolen-git/last/router.json', {})
+
     File.write('.stolen-git/project_info.json', {})
     File.write('.stolen-git/commits.json', [])
-
+    File.write('.stolen-git/staged.json', [])
     puts "#{NAME.capitalize} initialized Sucessfully :D"
+  end
+end
+
+def get_file_hash(path)
+  Digest::SHA256.file(path).hexdigest
+end
+
+def differencing(old_s, new_s, i1, i2, curr, diff_cnt, diff_seq)
+  puts "i1: #{i1}   i2: #{i2}  curr: #{curr}   diff_cnt: #{diff_cnt}"
+  return diff_cnt + (new_s.length - curr.length) if i1 >= old_s.length
+  return diff_cnt if i2 >= new_s.length
+
+  min_diff = 2**63 - 1
+  if old_s[i1] == new_s[i2]
+    min_diff = [min_diff, differencing(old_s, new_s, i1 + 1, i2 + 1, curr + old_s[i1], diff_cnt, diff_seq)].min
+  else
+    del = differencing(old_s, new_s, i1 + 1, i2, curr, diff_cnt + 1, diff_seq)
+    replace = differencing(old_s, new_s, i1 + 1, i2 + 1, curr + new_s[i2], diff_cnt + 1, diff_seq)
+    min_diff = [min_diff, del, replace].min
+  end
+  min_diff
+end
+
+def stage(_files)
+  File.read('.stolen-git/staged.json')
+  files.each do |file|
+    file_hash = get_file_hash(file)
+    router = JSON.parse(File.read('./stolen-git/last/router.json'))
+    next unless router.key?(file_hash)
+
+    old_file = File.read(router[:file_hash])
+    old_content = File.read(old_file)
+    new_content = File.read(old_file)
+    diff = differencing(old_content, new_content, 0, 0, '', 0, {})
+    puts "Diff: #{diff}"
   end
 end
 
@@ -73,8 +113,20 @@ when 'init'
   p_initialize
 
 when 'commit'
-  puts 'Committing changes...'
+  commit
 
+when 'test'
+  s1 = 'e'
+  s2 = 'ae'
+  puts differencing(s2, s1, 0, 0, '', 0, {})
+
+when 'stage'
+  files = ARG[1..]
+  if files.empty?
+    puts 'Usage: stolen-git stage <files..>'
+  else
+    stage(files)
+  end
 when 'reset'
   puts 'Reverting to latest changes...'
 

@@ -77,46 +77,64 @@ def get_file_hash(path)
   Digest::SHA256.file(path).hexdigest
 end
 
-def differencing(old_s, new_s, i1, i2, curr, diff_cnt, diff_seq)
-  # puts "i1: #{i1}   i2: #{i2}  curr: #{curr}   diff_cnt: #{diff_cnt}"
+def differencing(old_s, new_s, i1, i2, curr, insertions, deletions, diff_seq)
+  # puts "i1: #{i1}   i2: #{i2}  curr: #{curr} insertions: #{insertions}  deletions:#{deletions}"
   # print "diff_seq: #{diff_seq}\n"
   if i1 >= old_s.length
     trailing_add = (new_s.length - curr.length)
-    diff_cnt += trailing_add
-    for i in (1..trailing_add)
-      recorded_index = i + new_s.length - 1
-      diff_seq = diff_seq.merge(recorded_index => new_s[i2 + i - 1])
-    end
-
-    return { diff_cnt: diff_cnt, diff_seq: diff_seq }
-  end
-
-  return { diff_cnt: diff_cnt, diff_seq: diff_seq } if i2 >= new_s.length
-
-  min_diff = 2**63 - 1
-  min_seq = {}
-  if old_s[i1] == new_s[i2]
-    keep = differencing(old_s, new_s, i1 + 1, i2 + 1, curr + old_s[i1], diff_cnt, diff_seq)
-    if keep[:diff_cnt] < min_diff
-      min_diff = keep[:diff_cnt]
-      min_seq =  keep[:diff_seq]
-    end
-  else
-    del = differencing(old_s, new_s, i1 + 1, i2, curr, diff_cnt + 1, diff_seq.merge(i1 => ''))
-    replace = differencing(old_s, new_s, i1 + 1, i2 + 1, curr + new_s[i2], diff_cnt + 1,
-                           diff_seq.merge(i1 => new_s[i2]))
-    # puts "dle_diff_cnt: #{del[:diff_cnt]}    replace_diff_cnt: #{replace[:diff_cnt]}"
-    if [del[:diff_cnt], replace[:diff_cnt]].min < min_diff
-      if del[:diff_cnt] < replace[:diff_cnt]
-        min_diff = del[:diff_cnt]
-        min_seq = del[:diff_seq]
-      else
-        min_diff = replace[:diff_cnt]
-        min_seq = replace[:diff_seq]
+    # puts "trailing_add: #{trailing_add}   cur:#{curr}   old_s: #{old_s}   new_s: #{new_s}"
+    if trailing_add > 0
+      insertions += trailing_add
+      # TODO: Change this to each line
+      new_s.each_char.with_index do |val, i|
+        if i > curr.length || curr[i] != val
+          diff_seq = diff_seq.merge(i => { value: val, old_index: nil })
+          curr.insert(i, val)
+        end
       end
     end
+
+    diff_cnt = insertions + deletions
+    return { diff_cnt: diff_cnt, insertions: insertions, deletions: deletions, diff_seq: diff_seq }
   end
-  { diff_cnt: min_diff, diff_seq: min_seq }
+
+  if i2 >= new_s.length
+    return { diff_cnt: insertions + deletions, insertions: insertions, deletions: deletions,
+             diff_seq: diff_seq }
+  end
+
+  min_path = { diff_cnt: 2**63 - 1, diff_seq: {}, insertions: 0, deletions: 0 }
+  if old_s[i1] == new_s[i2]
+    keep = differencing(old_s, new_s, i1 + 1, i2 + 1, curr + old_s[i1], insertions, deletions, diff_seq)
+
+    print "keep: #{keep}"
+    puts
+    min_path = keep if keep[:diff_cnt] < min_path[:diff_cnt]
+  else
+    keep = differencing(old_s, new_s, i1 + 1, i2 + 1, curr + old_s[i1], insertions, deletions, diff_seq)
+    del = differencing(old_s, new_s, i1 + 1, i2, curr, insertions, deletions + 1,
+                       diff_seq.merge(i2 => { value: '', old_index: i1 }))
+    print "del: #{del}"
+    puts
+    replace = differencing(old_s, new_s, i1 + 1, i2 + 1, curr + new_s[i2], insertions + 1, deletions + 1,
+                           diff_seq.merge(i2 => { value: new_s[i2], old_index: i1 }))
+
+    print "replace: #{replace}"
+    puts
+    # puts "dle_diff_cnt: #{del[:diff_cnt]}    replace_diff_cnt: #{replace[:diff_cnt]}"
+    min_diff = [del[:diff_cnt], replace[:diff_cnt], keep[:diff_cnt]].min
+    if min_diff < min_path[:diff_cnt]
+      min_path = if del[:diff_cnt] == min_diff
+                   del
+                 elsif replace[:diff_cnt] == min_diff
+                   replace
+                 else
+                   keep
+                 end
+
+    end
+  end
+  min_path
 end
 
 def stage(_files)
@@ -129,8 +147,8 @@ def stage(_files)
     old_file = File.read(router[:file_hash])
     old_content = File.read(old_file)
     new_content = File.read(old_file)
-    diff = differencing(old_content, new_content, 0, 0, '', 0, {})
-    puts "Diff: #{diff}"
+    # diff = differencing(old_content, new_content, 0, 0, '', 0, 0, {})
+    # puts "Diff: #{diff}"
   end
 end
 
@@ -142,11 +160,14 @@ when 'commit'
   commit
 
 when 'test'
-  s1 = 'abcd'
-  s2 = 'bcde'
-  diff = differencing(s1, s2, 0, 0, '', 0, {})
+  s1 = 'e'
+  s2 = 'ae'
+  diff = differencing(s1, s2, 0, 0, '', 0, 0, {})
+
   puts "diff_cnt: #{diff[:diff_cnt]}"
   puts "diff_seq: #{diff[:diff_seq]}"
+  puts "diff_insertions: #{diff[:insertions]}"
+  puts "diff_deletions: #{diff[:deletions]}"
   # test_sub = { bro: 'hi' }.merge(key => 'hey')
   # print "test_seq: #{test_sub}"
 

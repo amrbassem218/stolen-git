@@ -78,19 +78,45 @@ def get_file_hash(path)
 end
 
 def differencing(old_s, new_s, i1, i2, curr, diff_cnt, diff_seq)
-  puts "i1: #{i1}   i2: #{i2}  curr: #{curr}   diff_cnt: #{diff_cnt}"
-  return diff_cnt + (new_s.length - curr.length) if i1 >= old_s.length
-  return diff_cnt if i2 >= new_s.length
+  # puts "i1: #{i1}   i2: #{i2}  curr: #{curr}   diff_cnt: #{diff_cnt}"
+  # print "diff_seq: #{diff_seq}\n"
+  if i1 >= old_s.length
+    trailing_add = (new_s.length - curr.length)
+    diff_cnt += trailing_add
+    for i in (1..trailing_add)
+      recorded_index = i + new_s.length - 1
+      diff_seq = diff_seq.merge(recorded_index => new_s[i2 + i - 1])
+    end
+
+    return { diff_cnt: diff_cnt, diff_seq: diff_seq }
+  end
+
+  return { diff_cnt: diff_cnt, diff_seq: diff_seq } if i2 >= new_s.length
 
   min_diff = 2**63 - 1
+  min_seq = {}
   if old_s[i1] == new_s[i2]
-    min_diff = [min_diff, differencing(old_s, new_s, i1 + 1, i2 + 1, curr + old_s[i1], diff_cnt, diff_seq)].min
+    keep = differencing(old_s, new_s, i1 + 1, i2 + 1, curr + old_s[i1], diff_cnt, diff_seq)
+    if keep[:diff_cnt] < min_diff
+      min_diff = keep[:diff_cnt]
+      min_seq =  keep[:diff_seq]
+    end
   else
-    del = differencing(old_s, new_s, i1 + 1, i2, curr, diff_cnt + 1, diff_seq)
-    replace = differencing(old_s, new_s, i1 + 1, i2 + 1, curr + new_s[i2], diff_cnt + 1, diff_seq)
-    min_diff = [min_diff, del, replace].min
+    del = differencing(old_s, new_s, i1 + 1, i2, curr, diff_cnt + 1, diff_seq.merge(i1 => ''))
+    replace = differencing(old_s, new_s, i1 + 1, i2 + 1, curr + new_s[i2], diff_cnt + 1,
+                           diff_seq.merge(i1 => new_s[i2]))
+    # puts "dle_diff_cnt: #{del[:diff_cnt]}    replace_diff_cnt: #{replace[:diff_cnt]}"
+    if [del[:diff_cnt], replace[:diff_cnt]].min < min_diff
+      if del[:diff_cnt] < replace[:diff_cnt]
+        min_diff = del[:diff_cnt]
+        min_seq = del[:diff_seq]
+      else
+        min_diff = replace[:diff_cnt]
+        min_seq = replace[:diff_seq]
+      end
+    end
   end
-  min_diff
+  { diff_cnt: min_diff, diff_seq: min_seq }
 end
 
 def stage(_files)
@@ -116,9 +142,13 @@ when 'commit'
   commit
 
 when 'test'
-  s1 = 'e'
-  s2 = 'ae'
-  puts differencing(s2, s1, 0, 0, '', 0, {})
+  s1 = 'abcd'
+  s2 = 'bcde'
+  diff = differencing(s1, s2, 0, 0, '', 0, {})
+  puts "diff_cnt: #{diff[:diff_cnt]}"
+  puts "diff_seq: #{diff[:diff_seq]}"
+  # test_sub = { bro: 'hi' }.merge(key => 'hey')
+  # print "test_seq: #{test_sub}"
 
 when 'stage'
   files = ARG[1..]

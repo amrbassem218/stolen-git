@@ -124,13 +124,13 @@ class DiffCalc
 
         next unless path[:insertions] + path[:deletions] < min_path[:diff_cnt]
 
-        isAdd = path == add
-        insertions = isAdd ? path[:insertions] + 1 : path[:insertions]
-        deletions = isAdd ? path[:deletions] : path[:deletions] + 1
+        is_add = path == add
+        insertions = is_add ? path[:insertions] + 1 : path[:insertions]
+        deletions = is_add ? path[:deletions] : path[:deletions] + 1
 
         insertion_seq = path[:insertion_seq].dup
         deletion_seq = path[:deletion_seq].dup
-        if isAdd
+        if is_add
           insertion_seq[i2] = new_s[i2]
         else
           deletion_seq = [i1] + deletion_seq

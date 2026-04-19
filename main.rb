@@ -88,36 +88,28 @@ class DiffCalc
   def differencing(old_s, new_s, i1, i2)
     return @mem[[i1, i2]] unless @mem[[i1, i2]].nil?
     if i1 >= old_s.length && i2 >= new_s.length
-      return { insertion_seq: {}, deletion_seq: {}, insertions: 0,
-               deletions: 0 }
+      return { insertion_seq: {}, deletion_seq: [], insertions: 0,
+               deletions: 0, diff_cnt: 0 }
     end
 
     if i1 >= old_s.length
-      trailing_ins = (new_s.length - i1)
+      trailing_ins = new_s.length - i2
       insertion_seq = {}
-
-      (i1...trailing_ins).each do |i|
+      (i2...new_s.length).each do |i|
         insertion_seq[i] = new_s[i]
-        puts "i: #{i1}"
       end
-      puts '*********'
-      puts "insertion_seq: #{insertion_seq}"
       return { insertions: trailing_ins, deletions: 0, insertion_seq: insertion_seq,
-               deletion_seq: {} }
+               deletion_seq: [], diff_cnt: trailing_ins }
 
     elsif i2 >= new_s.length
-      trailing_del = (old_s.length - i2)
-      deletion_seq = {}
-
-      (i2...trailing_del).each do |i|
-        deletion_seq[i] = old_s[i]
-      end
+      trailing_del = old_s.length - i1
+      deletion_seq = (i1...old_s.length).to_a
 
       return { insertions: 0, deletions: trailing_del, insertion_seq: {},
-               deletion_seq: deletion_seq }
+               deletion_seq: deletion_seq, diff_cnt: trailing_del }
     end
 
-    default_path = { diff_cnt: 2**63 - 1, insertion_seq: {}, deletion_seq: {}, insertions: 0, deletions: 0 }
+    default_path = { diff_cnt: 2**63 - 1, insertion_seq: {}, deletion_seq: [], insertions: 0, deletions: 0 }
     min_path = default_path
 
     if old_s[i1] == new_s[i2]
@@ -136,8 +128,13 @@ class DiffCalc
         insertions = isAdd ? path[:insertions] + 1 : path[:insertions]
         deletions = isAdd ? path[:deletions] : path[:deletions] + 1
 
-        insertion_seq = min_path[:insertion_seq].merge(path[:insertion_seq].dup)
+        insertion_seq = path[:insertion_seq].dup
         deletion_seq = path[:deletion_seq].dup
+        if isAdd
+          insertion_seq[i2] = new_s[i2]
+        else
+          deletion_seq = [i1] + deletion_seq
+        end
         min_path = {
           diff_cnt: insertions + deletions,
           insertions: insertions,
@@ -148,8 +145,7 @@ class DiffCalc
       end
 
     end
-    # puts "i1:#{i1}  i2:#{i2}   min_path: #{min_path} "
-    @mem[[i1, i2]] = min_path if min_path != default_path
+    @mem[[i1, i2]] = min_path unless min_path == default_path
     @cnt += 1
     min_path
   end
@@ -178,12 +174,12 @@ when 'commit'
   commit
 
 when 'test'
-  # s1 = "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum."
-  #
+  s1 = "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum."
   # s2 = "It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum' will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose (injected humour and the like)."
+  s2 = "alksfjlkasdjflkasdjflkasdj fasjflk;asdjflk aslfkjasdlkf jslkdfj j fjjfjf f f f f f f f f fpsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum."
   calc = DiffCalc.new
-  s1 = 'abcd'
-  s2 = 'aabcd'
+  # s1 = 'abcd'
+  # s2 = 'aabcd'
 
   tests = ARGV
   puts "tests: #{tests}"

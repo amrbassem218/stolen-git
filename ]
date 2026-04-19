@@ -85,70 +85,71 @@ class DiffCalc
     @cnt = 1
   end
 
-  def differencing(old_s, new_s, i1, i2)
-    return @mem[[i1, i2]] unless @mem[[i1, i2]].nil?
-    if i1 >= old_s.length && i2 >= new_s.length
-      return { insertion_seq: {}, deletion_seq: {}, insertions: 0,
-               deletions: 0 }
-    end
+  def differencing(old_s, new_s, i1, i2, curr, insertions, deletions, insertion_seq, deletion_seq)
+    return nil if curr.length > new_s.length
 
+    # puts "curr: #{curr}  new_s:#{curr}   insertions:#{insertions}    deletions:#{deletions}"
     if i1 >= old_s.length
-      trailing_ins = (new_s.length - i1)
-      insertion_seq = {}
-
-      (i1...trailing_ins).each do |i|
-        insertion_seq[i] = new_s[i]
-        puts "i: #{i1}"
+      trailing_add = (new_s.length - curr.length)
+      if trailing_add > 0
+        insertions += trailing_add
+        curr = curr.dup
+        new_s.each_char.with_index do |val, i|
+          if i > curr.length || curr[i] != val
+            insertion_seq = insertion_seq.merge(i => val)
+            curr.insert(i, val)
+          end
+        end
       end
-      puts '*********'
-      puts "insertion_seq: #{insertion_seq}"
-      return { insertions: trailing_ins, deletions: 0, insertion_seq: insertion_seq,
-               deletion_seq: {} }
+      # puts "curr: #{curr}  new_s:#{curr}   insertions:#{insertions}    deletions:#{deletions}"
+      return nil unless curr == new_s
 
-    elsif i2 >= new_s.length
-      trailing_del = (old_s.length - i2)
-      deletion_seq = {}
-
-      (i2...trailing_del).each do |i|
-        deletion_seq[i] = old_s[i]
-      end
-
-      return { insertions: 0, deletions: trailing_del, insertion_seq: {},
+      diff_cnt = insertions + deletions
+      return { diff_cnt: diff_cnt, insertions: insertions, deletions: deletions, insertion_seq: insertion_seq,
                deletion_seq: deletion_seq }
+
     end
+
+    if i2 >= new_s.length
+      return { diff_cnt: insertions + deletions, insertions: insertions, deletions: deletions,
+               insertion_seq: insertion_seq, deletion_seq: deletion_seq }
+    end
+
+    return @mem[[i1, i2]] unless @mem[[i1, i2]].nil?
 
     default_path = { diff_cnt: 2**63 - 1, insertion_seq: {}, deletion_seq: {}, insertions: 0, deletions: 0 }
     min_path = default_path
 
     if old_s[i1] == new_s[i2]
-      keep = differencing(old_s, new_s, i1 + 1, i2 + 1)
-      min_path = keep if keep && (keep[:insertions] + keep[:deletions] < min_path[:diff_cnt])
+      keep = differencing(old_s, new_s, i1 + 1, i2 + 1, curr + old_s[i1], insertions, deletions, insertion_seq,
+                          deletion_seq)
+      min_path = keep if keep && (keep[:diff_cnt] < min_path[:diff_cnt])
     else
-      del = differencing(old_s, new_s, i1 + 1, i2)
-      add = differencing(old_s, new_s, i1, i2 + 1)
+      # puts "curr: #{curr}  new_s:#{curr}   insertions:#{insertions}    deletions:#{deletions}"
+      del = differencing(old_s, new_s, i1 + 1, i2, curr, insertions, deletions + 1,
+                         insertion_seq, [*deletion_seq, i1])
+      add = differencing(old_s, new_s, i1, i2 + 1, curr + new_s[i2], insertions + 1, deletions,
+                         insertion_seq.merge(i2 => new_s[i2]), deletion_seq)
 
-      [del, add].each do |path|
-        next unless path
+      replace = differencing(old_s, new_s, i1 + 1, i2 + 1, curr + new_s[i2], insertions + 1, deletions + 1,
+                             insertion_seq.merge(i2 => new_s[i2]), [*deletion_seq, i1])
+      min_diff_list = []
+      min_diff_list.push(del[:diff_cnt]) if del
+      min_diff_list.push(add[:diff_cnt]) if add
+      min_diff_list.push(replace[:diff_cnt]) if replace
 
-        next unless path[:insertions] + path[:deletions] < min_path[:diff_cnt]
+      unless min_diff_list.empty?
+        min_diff = min_diff_list.min
 
-        isAdd = path == add
-        insertions = isAdd ? path[:insertions] + 1 : path[:insertions]
-        deletions = isAdd ? path[:deletions] : path[:deletions] + 1
-
-        insertion_seq = min_path[:insertion_seq].merge(path[:insertion_seq].dup)
-        deletion_seq = path[:deletion_seq].dup
-        min_path = {
-          diff_cnt: insertions + deletions,
-          insertions: insertions,
-          deletions: deletions,
-          insertion_seq: insertion_seq,
-          deletion_seq: deletion_seq
-        }
+        if min_diff < min_path[:diff_cnt]
+          min_path = del if del && del[:diff_cnt] == min_diff
+          min_path = add if add && add[:diff_cnt] == min_diff
+          min_path = replace if replace && replace[:diff_cnt] == min_diff
+        end
       end
 
     end
-    # puts "i1:#{i1}  i2:#{i2}   min_path: #{min_path} "
+    # puts "min_path: #{min_path}   i1:#{i1}    i2:#{i2}"
     @mem[[i1, i2]] = min_path if min_path != default_path
     @cnt += 1
     min_path
@@ -163,8 +164,8 @@ def stage(_files)
     next unless router.key?(file_hash)
 
     old_file = File.read(router[:file_hash])
-    File.read(old_file)
-    File.read(old_file)
+    old_content = File.read(old_file)
+    new_content = File.read(old_file)
     # diff = differencing(old_content, new_content, 0, 0, '', 0, 0, {})
     # puts "Diff: #{diff}"
   end
@@ -181,17 +182,8 @@ when 'test'
   # s1 = "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum."
   #
   # s2 = "It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum' will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose (injected humour and the like)."
-  calc = DiffCalc.new
   s1 = 'abcd'
   s2 = 'aabcd'
-
-  tests = ARGV
-  puts "tests: #{tests}"
-  if tests && tests.length >= 2
-    s1 = tests[0]
-    s2 = tests[1]
-  end
-
   puts ''
 
   print s1
@@ -200,7 +192,8 @@ when 'test'
   puts '***b***'
   print s2
   puts
-  diff = calc.differencing(s1, s2, 0, 0)
+  calc = DiffCalc.new
+  diff = calc.differencing(s1, s2, 0, 0, '', 0, 0, {}, [])
 
   puts "diff_cnt: #{diff[:diff_cnt]}"
   puts "insertion_seq: #{diff[:insertion_seq]}"

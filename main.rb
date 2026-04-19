@@ -1,4 +1,5 @@
 require 'optparse'
+require 'colorize'
 require 'fileutils'
 require 'digest'
 require 'json'
@@ -178,13 +179,95 @@ when 'diff'
   if files.length < 2
     puts 'Usage: stolen-git diff <first_file> <second_file>'
   else
-    file_a = File.read(files[0]).split('\n')
-    file_b = File.read(files[1]).split('\n')
+    file_a = File.read(files[0]).split("\n")
+    file_b = File.read(files[1]).split("\n")
     diff_calc = DiffCalc.new
     diff = diff_calc.differencing(file_a, file_b)
-    puts "Diff: (+): #{diff[:insertions]}    (-): #{diff[:deletions]}"
-  end
+    insertions, deletions, insertion_seq, deletion_seq = diff.values_at(:insertions, :deletions, :insertion_seq,
+                                                                        :deletion_seq)
 
+    # debug
+    # puts '**FILE A ***'
+    # print file_a
+    # puts
+    #
+    # puts '**FILE B ***'
+    # print file_b
+    # puts
+    #
+    # puts '** Diff***'
+    # puts diff
+    # puts
+
+    # sorting insertion_seq by keys
+    insertion_seq = insertion_seq.sort.to_h
+    insertion_seq_keys = insertion_seq.keys
+    puts "Diff: (+): #{insertions}    (-): #{deletions}"
+
+    # printing diff
+    insertion_poniter = 0
+    deletion_pointer = 0
+
+    # index (old or new)
+    # value (styled text to be printed)
+    # type (1 => insertion, 0 => deletion)
+    edit_list = []
+    while insertion_poniter < insertions && deletion_pointer < deletions
+      is_insertion = true
+      is_insertion = if insertion_poniter >= insertions
+                       false
+                     else
+                       insertion_seq_keys[insertion_poniter] < deletion_seq[deletion_pointer]
+                     end
+      index = is_insertion ? insertion_seq_keys[pointer] : deletion_seq[pointer]
+
+      if is_insertion
+        edit_list.push({ index: index, value: "+#{insertion_seq[index]}".green, type: 1 })
+        insertion_poniter += 1
+      else
+        edit_list.push({ index: index, value: "-#{file_b[index]}".red, type: 0 })
+        deletion_pointer += 1
+      end
+
+    end
+
+    MAX_SPACE_DIFF = 3
+    is_new_block = true
+    print_queue = []
+    block_queu = []
+    edit_list.each do |order, i|
+      is_new_block = false
+      # Printing Context Before
+      if i == 0
+        (order.index - MAX_SPACE_DIFF..order.index - 1).each do |j|
+          block_queu.push({ index: j, value: file_a[j] }) if j >= 0
+        end
+      elsif order[i - 1].index - order[i].index <= MAX_SPACE_DIFF
+        (order[i - 1].index + 1..order[i].index - 1).each do |j|
+          block_queu.push({ index: j, value: file_a[j] }) if j >= 0
+        end
+      end
+
+      # Printing actual line
+      block_queu.push({ index: j, value: order.value })
+
+      # Printing Context After in Case Block is done
+      next unless i + 1 < order.length && order[i + 1].index - order[i].index > MAX_SPACE_DIFF
+
+      print_queue.push(block_queu) if block_queu.length.positive?
+      block_queu = []
+      is_new_block = true
+
+      (order[i].index..MAX_SPACE_DIFF).each do |j|
+        block_queu.push({ index: j, value: file_a[j] }) if j >= 0
+      end
+    end
+    print_queue.push(block_queu) if block_queu.length.positive?
+
+    block_queu.each do |_block, _i|
+      puts '@ '
+    end
+  end
 when 'test'
   s1 = "a
     b

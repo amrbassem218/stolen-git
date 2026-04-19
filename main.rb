@@ -85,7 +85,7 @@ class DiffCalc
     @cnt = 1
   end
 
-  def differencing(old_s, new_s, i1, i2)
+  def differencing(old_s, new_s, i1 = 0, i2 = 0)
     return @mem[[i1, i2]] unless @mem[[i1, i2]].nil?
     if i1 >= old_s.length && i2 >= new_s.length
       return { insertion_seq: {}, deletion_seq: [], insertions: 0,
@@ -173,10 +173,26 @@ when 'init'
 when 'commit'
   commit
 
+when 'diff'
+  files = ARGV
+  if files.length < 2
+    puts 'Usage: stolen-git diff <first_file> <second_file>'
+  else
+    file_a = File.read(files[0]).split('\n')
+    file_b = File.read(files[1]).split('\n')
+    diff_calc = DiffCalc.new
+    diff = diff_calc.differencing(file_a, file_b)
+    puts "Diff: (+): #{diff[:insertions]}    (-): #{diff[:deletions]}"
+  end
+
 when 'test'
-  s1 = "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum."
-  # s2 = "It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum' will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose (injected humour and the like)."
-  s2 = "alksfjlkasdjflkasdjflkasdj fasjflk;asdjflk aslfkjasdlkf jslkdfj j fjjfjf f f f f f f f f fpsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum."
+  s1 = "a
+    b
+    c
+    d"
+
+  s2 = "a
+    bcd"
   calc = DiffCalc.new
   # s1 = 'abcd'
   # s2 = 'aabcd'
@@ -187,6 +203,9 @@ when 'test'
     s1 = tests[0]
     s2 = tests[1]
   end
+  s1 = s1.split("\n")
+  s2 = s2.split("\n")
+  diff = calc.differencing(s1, s2)
 
   puts ''
 
@@ -196,7 +215,6 @@ when 'test'
   puts '***b***'
   print s2
   puts
-  diff = calc.differencing(s1, s2, 0, 0)
 
   puts "diff_cnt: #{diff[:diff_cnt]}"
   puts "insertion_seq: #{diff[:insertion_seq]}"

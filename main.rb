@@ -254,13 +254,41 @@ when 'diff'
     end
 
     print_queue = print_queue.sort.to_h
-
-    print_queue.each do |_index, lines|
+    print_queue_keys = print_queue.keys
+    printed = {}
+    print_queue.each_with_index do |(index, lines), queue_i|
       lines = lines.sort_by { |line| line[:type] }
       is_changed = false
-      lines.each do |line|
+      lines.each do |line, _i|
+        next if printed[[index, line[:type]]] == 1
+
+        # puts "index: #{index}  type:#{line[:type]}  "
+
         puts line[:value] unless is_changed == true && line[:type] == 1
         is_changed = true
+
+        next unless line[:type] == -1
+
+        j = queue_i + 1
+
+        define_method :is_deletion? do
+          is_within_range = j <= print_queue_keys.length
+
+          has_deletion = print_queue[print_queue_keys[j]].find do |x|
+            x[:type] == -1
+          end
+          is_within_range && has_deletion
+        end
+
+        while is_deletion?
+          q_i = print_queue_keys[j]
+          cur_line = print_queue[q_i].find { |x| x[:type] == -1 }
+          cur_line ||= print_queue[q_i].find { |x| x[:type] == 1 }
+          puts cur_line[:value]
+          printed[[q_i, cur_line[:type]]] = 1
+          # puts "j: #{j}  q_i:#{q_i}  type:#{cur_line[:type]}   value:#{cur_line[:value]}"
+          j += 1
+        end
       end
 
       # puts "block:#{block}"
@@ -268,6 +296,7 @@ when 'diff'
       # block[:block].each { |line| puts line[:value] }
       # puts
     end
+
   end
 when 'test'
   s1 = "a

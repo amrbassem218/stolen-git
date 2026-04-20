@@ -244,10 +244,17 @@ when 'diff'
         (order[:index] - MAX_SPACE_DIFF..order[:index] - 1).each do |j|
           block_queu.push({ index: j, value: file_a[j] }) if j >= 0
         end
-      elsif edit_list[i - 1][:index] - edit_list[i][:index] <= MAX_SPACE_DIFF
-        (edit_list[i - 1][:index] + 1..edit_list[i][:index] - 1).each do |j|
+      elsif order[:index] - edit_list[i - 1][:index] + 1 <= MAX_SPACE_DIFF
+        (edit_list[i - 1][:index] + 1..order[:index] - 1).each do |j|
           block_queu.push({ index: j, value: file_a[j] }) if j >= 0
         end
+      # elsif editlist[i-1][:index] + MAX_SPACE_DIFF >= order[:index] - MAX_SPACE_DIFF
+
+      else
+        (order[:index] - MAX_SPACE_DIFF..order[:index] - 1).each do |j|
+          block_queu.push({ index: j, value: file_a[j] }) if j >= 0
+        end
+
       end
 
       # Printing actual line
@@ -262,6 +269,10 @@ when 'diff'
       # Printing Context After in Case Block is done
       next unless i + 1 < order.length && edit_list[i + 1][:index] - edit_list[i][:index] > MAX_SPACE_DIFF
 
+      (order[:index] + 1..order[:index] + MAX_SPACE_DIFF).each do |j|
+        block_queu.push({ index: j, value: file_a[j] }) if j >= 0
+      end
+
       if block_queu.length.positive?
         print_queue.push({ block: block_queu, start_index: block_queu.first[:index], insertions: block_inserts,
                            deletions: block_deletions })
@@ -270,10 +281,6 @@ when 'diff'
       block_inserts = 0
       block_deletions = 0
       is_new_block = true
-
-      (order[:index]..MAX_SPACE_DIFF).each do |j|
-        block_queu.push({ index: j, value: file_a[j] }) if j >= 0
-      end
     end
     if block_queu.length.positive?
       print_queue.push({ block: block_queu, start_index: block_queu.first[:index], insertions: block_inserts,

@@ -97,7 +97,10 @@ class DiffCalc
       trailing_ins = new_s.length - i2
       insertion_seq = {}
       (i2...new_s.length).each do |i|
-        insertion_seq[i] = new_s[i]
+        insertion_seq[i] = {
+          value: new_s[i],
+          old_index: i1
+        }
       end
       return { insertions: trailing_ins, deletions: 0, insertion_seq: insertion_seq,
                deletion_seq: [], diff_cnt: trailing_ins }
@@ -132,7 +135,10 @@ class DiffCalc
         insertion_seq = path[:insertion_seq].dup
         deletion_seq = path[:deletion_seq].dup
         if is_add
-          insertion_seq[i2] = new_s[i2]
+          insertion_seq[i2] = {
+            value: new_s[i2],
+            old_index: i1
+          }
         else
           deletion_seq = [i1] + deletion_seq
         end
@@ -210,88 +216,57 @@ when 'diff'
 
     # index (old or new)
     # value (styled text to be printed)
-    # type (1 => insertion, 0 => deletion)
+    # type (-1 => deletion, 0 => insertion, 1 => not changed)
     edit_list = []
-    while insertion_poniter < insertions && deletion_pointer < deletions
+    while insertion_poniter < insertions || deletion_pointer < deletions
       is_insertion = true
       is_insertion = if insertion_poniter >= insertions
                        false
+                     elsif deletion_pointer >= deletions
+                       true
                      else
                        insertion_seq_keys[insertion_poniter] < deletion_seq[deletion_pointer]
                      end
       index = is_insertion ? insertion_seq_keys[insertion_poniter] : deletion_seq[deletion_pointer]
-
       if is_insertion
-        edit_list.push({ index: index, value: "+#{insertion_seq[index]}".green, type: 1 })
+        edit_list.push({ index: index, value: "+#{insertion_seq[index][:value]}".green, type: 0,
+                         old_index: insertion_seq[index][:old_index] })
         insertion_poniter += 1
       else
-        edit_list.push({ index: index, value: "-#{file_b[index]}".red, type: 0 })
+        edit_list.push({ index: index, value: "-#{file_a[index]}".red, type: -1, old_index: index })
         deletion_pointer += 1
       end
+
+      # puts "index: #{index},  is_insertion: #{is_insertion}  insertion_poniter:#{insertion_poniter}  deletion_pointer: #{deletion_pointer}"
 
     end
 
     MAX_SPACE_DIFF = 3
-    is_new_block = true
-    print_queue = []
-    block_queu = []
-    block_inserts = 0
-    block_deletions = 0
-    edit_list.each_with_index do |order, i|
-      is_new_block = false
-      # Printing Context Before
-      if i == 0
-        (order[:index] - MAX_SPACE_DIFF..order[:index] - 1).each do |j|
-          block_queu.push({ index: j, value: file_a[j] }) if j >= 0
-        end
-      elsif order[:index] - edit_list[i - 1][:index] + 1 <= MAX_SPACE_DIFF
-        (edit_list[i - 1][:index] + 1..order[:index] - 1).each do |j|
-          block_queu.push({ index: j, value: file_a[j] }) if j >= 0
-        end
-      # elsif editlist[i-1][:index] + MAX_SPACE_DIFF >= order[:index] - MAX_SPACE_DIFF
+    print_queue = {}
+    edit_list.each_with_index do |order, _i|
+      (order[:old_index] - MAX_SPACE_DIFF..order[:old_index] + MAX_SPACE_DIFF).each do |j|
+        next unless j >= 0 && j < file_b.length
 
-      else
-        (order[:index] - MAX_SPACE_DIFF..order[:index] - 1).each do |j|
-          block_queu.push({ index: j, value: file_a[j] }) if j >= 0
-        end
-
+        line = order[:old_index] == j ? order : { index: j, value: file_a[j], type: 1, old_index: j }
+        print_queue[j] ||= []
+        print_queue[j].push(line) unless line[:type] == 1 && print_queue[j].length.positive?
       end
-
-      # Printing actual line
-      block_queu.push({ index: j, value: order[:value] })
-
-      if order[:type] == 1
-        block_inserts += 1
-      else
-        block_deletions += 1
-      end
-
-      # Printing Context After in Case Block is done
-      next unless i + 1 < order.length && edit_list[i + 1][:index] - edit_list[i][:index] > MAX_SPACE_DIFF
-
-      (order[:index] + 1..order[:index] + MAX_SPACE_DIFF).each do |j|
-        block_queu.push({ index: j, value: file_a[j] }) if j >= 0
-      end
-
-      if block_queu.length.positive?
-        print_queue.push({ block: block_queu, start_index: block_queu.first[:index], insertions: block_inserts,
-                           deletions: block_deletions })
-      end
-      block_queu = []
-      block_inserts = 0
-      block_deletions = 0
-      is_new_block = true
-    end
-    if block_queu.length.positive?
-      print_queue.push({ block: block_queu, start_index: block_queu.first[:index], insertions: block_inserts,
-                         deletions: block_deletions })
     end
 
-    print_queue.each do |block|
+    print_queue = print_queue.sort.to_h
+
+    print_queue.each do |_index, lines|
+      lines = lines.sort_by { |line| line[:type] }
+      is_changed = false
+      lines.each do |line|
+        puts line[:value] unless is_changed == true && line[:type] == 1
+        is_changed = true
+      end
+
       # puts "block:#{block}"
-      print "@@ #{block[:start_index]}, +#{block[:insertions]} -#{block_deletions} @@ ".light_blue
-      block[:block].each { |line| puts line[:value] }
-      puts
+      # print "@@ #{block[:start_index]}, +#{block[:insertions]} -#{block_deletions} @@ ".light_blue
+      # block[:block].each { |line| puts line[:value] }
+      # puts
     end
   end
 when 'test'
@@ -301,7 +276,11 @@ when 'test'
     d"
 
   s2 = "a
-    bcd"
+    k
+    k
+  k
+  c
+  d"
   calc = DiffCalc.new
   # s1 = 'abcd'
   # s2 = 'aabcd'

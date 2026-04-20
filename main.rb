@@ -219,7 +219,7 @@ when 'diff'
                      else
                        insertion_seq_keys[insertion_poniter] < deletion_seq[deletion_pointer]
                      end
-      index = is_insertion ? insertion_seq_keys[pointer] : deletion_seq[pointer]
+      index = is_insertion ? insertion_seq_keys[insertion_poniter] : deletion_seq[deletion_pointer]
 
       if is_insertion
         edit_list.push({ index: index, value: "+#{insertion_seq[index]}".green, type: 1 })
@@ -235,37 +235,56 @@ when 'diff'
     is_new_block = true
     print_queue = []
     block_queu = []
-    edit_list.each do |order, i|
+    block_inserts = 0
+    block_deletions = 0
+    edit_list.each_with_index do |order, i|
       is_new_block = false
       # Printing Context Before
       if i == 0
-        (order.index - MAX_SPACE_DIFF..order.index - 1).each do |j|
+        (order[:index] - MAX_SPACE_DIFF..order[:index] - 1).each do |j|
           block_queu.push({ index: j, value: file_a[j] }) if j >= 0
         end
-      elsif order[i - 1].index - order[i].index <= MAX_SPACE_DIFF
-        (order[i - 1].index + 1..order[i].index - 1).each do |j|
+      elsif edit_list[i - 1][:index] - edit_list[i][:index] <= MAX_SPACE_DIFF
+        (edit_list[i - 1][:index] + 1..edit_list[i][:index] - 1).each do |j|
           block_queu.push({ index: j, value: file_a[j] }) if j >= 0
         end
       end
 
       # Printing actual line
-      block_queu.push({ index: j, value: order.value })
+      block_queu.push({ index: j, value: order[:value] })
+
+      if order[:type] == 1
+        block_inserts += 1
+      else
+        block_deletions += 1
+      end
 
       # Printing Context After in Case Block is done
-      next unless i + 1 < order.length && order[i + 1].index - order[i].index > MAX_SPACE_DIFF
+      next unless i + 1 < order.length && edit_list[i + 1][:index] - edit_list[i][:index] > MAX_SPACE_DIFF
 
-      print_queue.push(block_queu) if block_queu.length.positive?
+      if block_queu.length.positive?
+        print_queue.push({ block: block_queu, start_index: block_queu.first[:index], insertions: block_inserts,
+                           deletions: block_deletions })
+      end
       block_queu = []
+      block_inserts = 0
+      block_deletions = 0
       is_new_block = true
 
-      (order[i].index..MAX_SPACE_DIFF).each do |j|
+      (order[:index]..MAX_SPACE_DIFF).each do |j|
         block_queu.push({ index: j, value: file_a[j] }) if j >= 0
       end
     end
-    print_queue.push(block_queu) if block_queu.length.positive?
+    if block_queu.length.positive?
+      print_queue.push({ block: block_queu, start_index: block_queu.first[:index], insertions: block_inserts,
+                         deletions: block_deletions })
+    end
 
-    block_queu.each do |_block, _i|
-      puts '@ '
+    print_queue.each do |block|
+      # puts "block:#{block}"
+      print "@@ #{block[:start_index]}, +#{block[:insertions]} -#{block_deletions} @@ ".light_blue
+      block[:block].each { |line| puts line[:value] }
+      puts
     end
   end
 when 'test'

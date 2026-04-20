@@ -229,11 +229,11 @@ when 'diff'
                      end
       index = is_insertion ? insertion_seq_keys[insertion_poniter] : deletion_seq[deletion_pointer]
       if is_insertion
-        edit_list.push({ index: index, value: "+#{insertion_seq[index][:value]}".green, type: 0,
+        edit_list.push({ index: index, value: "#{insertion_seq[index][:value]}", type: 0,
                          old_index: insertion_seq[index][:old_index] })
         insertion_poniter += 1
       else
-        edit_list.push({ index: index, value: "-#{file_a[index]}".red, type: -1, old_index: index })
+        edit_list.push({ index: index, value: "#{file_a[index]}", type: -1, old_index: index })
         deletion_pointer += 1
       end
 
@@ -244,18 +244,32 @@ when 'diff'
     MAX_SPACE_DIFF = 3
     print_queue = {}
     edit_list.each_with_index do |order, _i|
-      (order[:old_index] - MAX_SPACE_DIFF..order[:old_index] + MAX_SPACE_DIFF).each do |j|
+      (order[:index] - MAX_SPACE_DIFF..order[:index] + MAX_SPACE_DIFF).each do |j|
         next unless j >= 0 && j < file_b.length
 
-        line = order[:old_index] == j ? order : { index: j, value: file_a[j], type: 1, old_index: j }
-        print_queue[j] ||= []
-        print_queue[j].push(line) unless line[:type] == 1 && print_queue[j].length.positive?
+        line = order[:index] == j ? order : { index: j, value: file_b[j], type: 1, old_index: j }
+        print_queue[line[:old_index]] ||= []
+        print_queue[line[:old_index]].push(line) unless line[:type] == 1 && print_queue[j].length.positive?
       end
     end
 
     print_queue = print_queue.sort.to_h
     print_queue_keys = print_queue.keys
     printed = {}
+    def print_line(line)
+      sign = if line[:type] == -1
+               '-'
+             else
+               line[:type] == 0 ? '+' : ''
+             end
+      print_text = "#{line[:index]} #{sign}#{line[:value]}"
+      if line[:type] == -1
+        print_text = print_text.red
+      elsif line[:type] == 0
+        print_text = print_text.green
+      end
+      puts print_text
+    end
     print_queue.each_with_index do |(index, lines), queue_i|
       lines = lines.sort_by { |line| line[:type] }
       is_changed = false
@@ -264,7 +278,7 @@ when 'diff'
 
         # puts "index: #{index}  type:#{line[:type]}  "
 
-        puts line[:value] unless is_changed == true && line[:type] == 1
+        print_line(line) unless is_changed == true && line[:type] == 1
         is_changed = true
 
         next unless line[:type] == -1
@@ -284,7 +298,7 @@ when 'diff'
           q_i = print_queue_keys[j]
           cur_line = print_queue[q_i].find { |x| x[:type] == -1 }
           cur_line ||= print_queue[q_i].find { |x| x[:type] == 1 }
-          puts cur_line[:value]
+          print_line(cur_line)
           printed[[q_i, cur_line[:type]]] = 1
           # puts "j: #{j}  q_i:#{q_i}  type:#{cur_line[:type]}   value:#{cur_line[:value]}"
           j += 1

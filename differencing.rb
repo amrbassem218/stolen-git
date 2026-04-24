@@ -209,11 +209,6 @@ class DiffCalc
           j += 1
         end
       end
-
-      # puts "block:#{block}"
-      # print "@@ #{block[:start_index]}, +#{block[:insertions]} -#{block_deletions} @@ ".light_blue
-      # block[:block].each { |line| puts line[:value] }
-      # puts
     end
   end
 end

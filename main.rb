@@ -184,8 +184,6 @@ def stage(_files)
     old_file = File.read(router[:file_hash])
     File.read(old_file)
     File.read(old_file)
-    # diff = differencing(old_content, new_content, 0, 0, '', 0, 0, {})
-    # puts "Diff: #{diff}"
   end
 end
 
@@ -214,7 +212,6 @@ when 'diff'
 
     deletion_seq = deletion_seq.sort.to_h
     deletion_seq_keys = deletion_seq.keys
-    puts "deletion_seq_keys: #{deletion_seq_keys}"
 
     puts "Diff: (+): #{insertions}    (-): #{deletions}"
 
@@ -241,19 +238,14 @@ when 'diff'
                          old_index: insertion_seq[index][:old_index] })
         insertion_poniter += 1
       else
-        # puts "index: #{index}   deletion_pointer:#{deletion_pointer}  deletion_seq_keys:#{deletion_seq_keys}  deletions:#{deletions}  insertion_pointer:#{insertion_poniter} insertions:#{insertions}"
-        # puts "index: #{index}   deletion_ponter: #{deletion_pointer}    seq_keys_len:#{deletion_seq_keys.length}    "
         deletion_seq[index] = deletion_seq[index].sort_by { |del| del[:old_index] }
         deletion_seq[index].each do |del|
           old_index = del[:old_index]
-          puts "bs: #{file_a[old_index]}   i: #{index}   old_index: #{old_index}" if del[:ma_type] == 'bs'
           edit_list.push({ index: index, value: "#{file_a[old_index]}", type: -1,
                            old_index: old_index })
         end
         deletion_pointer += 1
       end
-
-      # puts "index: #{index},  is_insertion: #{is_insertion}  insertion_poniter:#{insertion_poniter}  deletion_pointer: #{deletion_pointer}"
 
     end
 
@@ -272,11 +264,7 @@ when 'diff'
     print_queue = print_queue.sort.to_h
     print_queue_keys = print_queue.keys
     printed = {}
-    # puts 'edit_list: '
-    # edit_list.each { |e| puts e }
-    #
-    # puts 'print_queue: '
-    # print_queue.each { |_k, v| puts v }
+
     def print_line(line)
       sign = if line[:type] == -1
                '-'
@@ -297,6 +285,7 @@ when 'diff'
       end
       puts print_text
     end
+
     print_queue.each_with_index do |(index, lines), queue_i|
       lines = lines.sort_by { |line| line[:type] }
       is_changed = false

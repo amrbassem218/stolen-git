@@ -172,38 +172,10 @@ class DiffCalc
       diff_cnt: result[:diff_cnt]
     }
   end
-end
 
-def stage(_files)
-  File.read('.stolen-git/staged.json')
-  files.each do |file|
-    file_hash = get_file_hash(file)
-    router = JSON.parse(File.read('./stolen-git/last/router.json'))
-    next unless router.key?(file_hash)
-
-    old_file = File.read(router[:file_hash])
-    File.read(old_file)
-    File.read(old_file)
-  end
-end
-
-case command
-when 'init'
-  p_initialize
-
-when 'commit'
-  commit
-
-when 'diff'
-  files = ARGV
-  if files.length < 2
-    puts 'Usage: stolen-git diff <first_file> <second_file>'
-  else
-    file_a = File.read(files[0]).split("\n")
-    file_b = File.read(files[1]).split("\n")
-    diff_calc = DiffCalc.new
-    diff_calc.compute_diff(file_a, file_b)
-    diff = diff_calc.build_sequences
+  def print_diff(file_a, file_b)
+    compute_diff(file_a, file_b)
+    diff = build_sequences
     insertions, deletions, insertion_seq, deletion_seq = diff.values_at(:insertions, :deletions, :insertion_seq,
                                                                         :deletion_seq)
     # printing diff
@@ -225,7 +197,6 @@ when 'diff'
     insertion_poniter = 0
     deletion_pointer = 0
     while insertion_poniter < insertions || deletion_pointer < deletion_seq_keys.length
-      is_insertion = true
       is_insertion = if insertion_poniter >= insertions
                        false
                      elsif deletion_pointer >= deletion_seq_keys.length
@@ -250,11 +221,11 @@ when 'diff'
 
     end
 
-    MAX_SPACE_DIFF = 3
+    max_space_diff = 3
     print_queue = {}
     # Getting all the lines to print (including context ones)
     edit_list.each_with_index do |order, _i|
-      (order[:index] - MAX_SPACE_DIFF..order[:index] + MAX_SPACE_DIFF).each do |j|
+      (order[:index] - max_space_diff..order[:index] + max_space_diff).each do |j|
         next unless j >= 0 && j < file_b.length
 
         line = order[:index] == j ? order : { index: j, value: file_b[j], type: 1, old_index: j }
@@ -303,7 +274,7 @@ when 'diff'
 
         j = queue_i + 1
 
-        define_method :is_deletion? do
+        define_singleton_method :is_deletion? do
           return false if j >= print_queue_keys.length
 
           print_queue[print_queue_keys[j]]&.any? { |x| x[:type] == -1 }
@@ -324,8 +295,40 @@ when 'diff'
       # block[:block].each { |line| puts line[:value] }
       # puts
     end
-
   end
+end
+
+def stage(_files)
+  File.read('.stolen-git/staged.json')
+  files.each do |file|
+    file_hash = get_file_hash(file)
+    router = JSON.parse(File.read('./stolen-git/last/router.json'))
+    next unless router.key?(file_hash)
+
+    old_file = File.read(router[:file_hash])
+    File.read(old_file)
+    File.read(old_file)
+  end
+end
+
+case command
+when 'init'
+  p_initialize
+
+when 'commit'
+  commit
+
+when 'diff'
+  files = ARGV
+  if files.length < 2
+    puts 'Usage: stolen-git diff <first_file> <second_file>'
+  else
+    file_a = File.read(files[0]).split("\n")
+    file_b =  File.read(files[1]).split("\n")
+    diff_calc = DiffCalc.new
+    diff_calc.print_diff(file_a, file_b)
+  end
+
 when 'test'
   s1 = "a
     b

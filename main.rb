@@ -206,23 +206,24 @@ when 'diff'
     diff = diff_calc.build_sequences
     insertions, deletions, insertion_seq, deletion_seq = diff.values_at(:insertions, :deletions, :insertion_seq,
                                                                         :deletion_seq)
-    # sorting insertion_seq by keys
+    # printing diff
+    puts "Diff: (+): #{insertions}    (-): #{deletions}"
+
+    # sorting by keys
     insertion_seq = insertion_seq.sort.to_h
     insertion_seq_keys = insertion_seq.keys
 
     deletion_seq = deletion_seq.sort.to_h
     deletion_seq_keys = deletion_seq.keys
 
-    puts "Diff: (+): #{insertions}    (-): #{deletions}"
-
-    # printing diff
-    insertion_poniter = 0
-    deletion_pointer = 0
-
     # index (old or new)
     # value (styled text to be printed)
     # type (-1 => deletion, 0 => insertion, 1 => not changed)
     edit_list = []
+
+    # Getting a list of all the changes
+    insertion_poniter = 0
+    deletion_pointer = 0
     while insertion_poniter < insertions || deletion_pointer < deletion_seq_keys.length
       is_insertion = true
       is_insertion = if insertion_poniter >= insertions
@@ -251,6 +252,7 @@ when 'diff'
 
     MAX_SPACE_DIFF = 3
     print_queue = {}
+    # Getting all the lines to print (including context ones)
     edit_list.each_with_index do |order, _i|
       (order[:index] - MAX_SPACE_DIFF..order[:index] + MAX_SPACE_DIFF).each do |j|
         next unless j >= 0 && j < file_b.length
@@ -265,6 +267,7 @@ when 'diff'
     print_queue_keys = print_queue.keys
     printed = {}
 
+    # Stylizing & printing lines
     def print_line(line)
       sign = if line[:type] == -1
                '-'
@@ -286,13 +289,12 @@ when 'diff'
       puts print_text
     end
 
+    # Printing all the lines
     print_queue.each_with_index do |(index, lines), queue_i|
       lines = lines.sort_by { |line| line[:type] }
       is_changed = false
       lines.each do |line, _i|
         next if printed[[index, line[:type]]] == 1
-
-        # puts "index: #{index}  type:#{line[:type]}  "
 
         print_line(line) unless is_changed == true && line[:type] == 1
         is_changed = true
@@ -313,7 +315,6 @@ when 'diff'
           cur_line ||= print_queue[q_i].find { |x| x[:type] == 1 }
           print_line(cur_line)
           printed[[q_i, cur_line[:type]]] = 1
-          # puts "j: #{j}  q_i:#{q_i}  type:#{cur_line[:type]}   value:#{cur_line[:value]}"
           j += 1
         end
       end

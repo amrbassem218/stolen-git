@@ -1,17 +1,62 @@
+require 'securerandom'
 require_relative 'differencing'
 class Actions
+  def p_initialize
+    # Check if already initialized
+    if File.exist?('.stolen-git')
+      if confirm?('An instance of stolen-git is already up here do you want to replace it')
+        if confirm?('THIS WILL DELETE ALL COMMITS AND INSTANCES OF stolen-git. ARE YOU SURE')
+          FileUtils.rm_rf('.stolen-git')
+
+          if File.exist?('.stolen-git')
+            puts 'An error occured during the deletion process of the old directory of stolen-git'
+          else
+            p_initialize
+          end
+        else
+          puts 'ok'
+        end
+      else
+        puts 'ok'
+      end
+
+    else
+      # main dot directory
+      FileUtils.mkdir_p('.stolen-git')
+
+      # Sub Directories
+      FileUtils.mkdir_p('.stolen-git/commits')
+      FileUtils.mkdir_p('.stolen-git/last')
+
+      # main files
+      FileUtils.write('.stolen-git/router.json', {})
+      File.write('.stolen-git/project_info.json', {})
+      File.write('.stolen-git/commits.json', [])
+      File.write('.stolen-git/staged.json', [])
+
+      puts "#{NAME.capitalize} initialized Sucessfully :D"
+    end
+  end
+
   def stage(_files)
-    files = ARG[1..]
+    files = ARG
     if files.empty?
       puts 'Usage: stolen-git stage <files..>'
       return
     end
-    File.read('.stolen-git/staged.json')
     files.each do |file|
       file_hash = get_file_hash(file)
-      router = JSON.parse(File.read('./stolen-git/last/router.json'))
-      next unless router.key?(file_hash)
-
+      router_path = './stolen-git/router.json'
+      router = JSON.parse(File.read(router_path))
+      if router.empty?
+        puts "'Router not found. run 'stolen-git init' to reinitialize "
+      elsif router[file_hash]
+        # klasdfj
+      else
+        ext = File.extname(file)
+        name = SecureRandom.uuid
+        File.write("./stolen-git/last/#{name}#{ext}")
+      end
       old_file = File.read(router[:file_hash])
       File.read(old_file)
       File.read(old_file)

@@ -1,8 +1,5 @@
 require 'optparse'
-require 'colorize'
-require 'fileutils'
 require 'digest'
-require 'json'
 require_relative 'differencing'
 require_relative 'help'
 require_relative 'utils'

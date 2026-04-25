@@ -1,3 +1,4 @@
+require 'colorize'
 class DiffCalc
   attr_reader :mem, :cnt, :old_s, :new_s
 

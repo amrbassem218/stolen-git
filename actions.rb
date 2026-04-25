@@ -1,11 +1,15 @@
 require 'securerandom'
 require_relative 'differencing'
+require_relative 'utils'
+require 'fileutils'
+require 'json'
+UTILS = Utils.new
 class Actions
   def p_initialize
     # Check if already initialized
     if File.exist?('.stolen-git')
-      if confirm?('An instance of stolen-git is already up here do you want to replace it')
-        if confirm?('THIS WILL DELETE ALL COMMITS AND INSTANCES OF stolen-git. ARE YOU SURE')
+      if UTILS.confirm?('An instance of stolen-git is already up here do you want to replace it')
+        if UTILS.confirm?('THIS WILL DELETE ALL COMMITS AND INSTANCES OF stolen-git. ARE YOU SURE')
           FileUtils.rm_rf('.stolen-git')
 
           if File.exist?('.stolen-git')
@@ -29,7 +33,7 @@ class Actions
       FileUtils.mkdir_p('.stolen-git/last')
 
       # main files
-      FileUtils.write('.stolen-git/router.json', {})
+      File.write('.stolen-git/router.json', {})
       File.write('.stolen-git/project_info.json', {})
       File.write('.stolen-git/commits.json', [])
       File.write('.stolen-git/staged.json', [])

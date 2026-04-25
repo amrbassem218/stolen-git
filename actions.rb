@@ -42,28 +42,29 @@ class Actions
     end
   end
 
-  def stage(_files)
-    files = ARG
+  def stage
+    files = ARGV
+    puts files
     if files.empty?
       puts 'Usage: stolen-git stage <files..>'
       return
     end
     files.each do |file|
-      file_hash = get_file_hash(file)
-      router_path = './stolen-git/router.json'
-      router = JSON.parse(File.read(router_path))
-      if router.empty?
-        puts "'Router not found. run 'stolen-git init' to reinitialize "
-      elsif router[file_hash]
+      file_hash = UTILS.get_file_hash(file)
+      router_path = '.stolen-git/router.json'
+      router = File.read(router_path)
+      puts "'Router not found. run 'stolen-git init' to reinitialize " if router.empty?
+      router = JSON.parse(router)
+      puts "router: #{router}"
+      if router[file_hash]
         # klasdfj
       else
         ext = File.extname(file)
         name = SecureRandom.uuid
-        File.write("./stolen-git/last/#{name}#{ext}")
+        file_content = File.read(file)
+        File.write(".stolen-git/last/#{name}#{ext}", file_content)
+
       end
-      old_file = File.read(router[:file_hash])
-      File.read(old_file)
-      File.read(old_file)
     end
   end
 

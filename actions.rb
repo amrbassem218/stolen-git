@@ -33,9 +33,9 @@ class Actions
       FileUtils.mkdir_p('.stolen-git/last')
 
       # main files
-      File.write('.stolen-git/router.json', {})
+      File.write('.stolen-git/router.jsonl', {})
       File.write('.stolen-git/project_info.json', {})
-      File.write('.stolen-git/commits.json', [])
+      File.write('.stolen-git/commits.jsonl', [])
       File.write('.stolen-git/staged.json', [])
 
       puts "#{NAME.capitalize} initialized Sucessfully :D"

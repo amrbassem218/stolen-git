@@ -1,12 +1,91 @@
 {
   "general_info": {
-    "insertions": 80,
+    "insertions": 16,
     "deletions": 0
   },
   "files": {
-    "a8cdd76642f0ecda0067f4d780d027935959e42dc16520220f295191b913efba": "{\n  \"name\": \"a\",\n  \"diff\": {\n    \"insertion_seq\": {\n      \"0\": {\n        \"value\": \"a\\n\",\n        \"old_index\": 0\n      },\n      \"1\": {\n        \"value\": \"b\\n\",\n        \"old_index\": 0\n      },\n      \"2\": {\n        \"value\": \"c\\n\",\n        \"old_index\": 0\n      },\n      \"3\": {\n        \"value\": \"d\\n\",\n        \"old_index\": 0\n      },\n      \"4\": {\n        \"value\": \"e\\n\",\n        \"old_index\": 0\n      },\n      \"5\": {\n        \"value\": \"f\\n\",\n        \"old_index\": 0\n      },\n      \"6\": {\n        \"value\": \"g\\n\",\n        \"old_index\": 0\n      },\n      \"7\": {\n        \"value\": \"h\\n\",\n        \"old_index\": 0\n      }\n    },\n    \"deletion_seq\": {\n    },\n    \"insertions\": 8,\n    \"deletions\": 0,\n    \"diff_cnt\": 8\n  }\n}",
-    "397f228d24283cba7278a58bb6b72e15234aa492f1d5ce53f57bbcece7053d56": "{\n  \"name\": \"b\",\n  \"diff\": {\n    \"insertion_seq\": {\n      \"0\": {\n        \"value\": \"a\\n\",\n        \"old_index\": 0\n      },\n      \"1\": {\n        \"value\": \"b\\n\",\n        \"old_index\": 0\n      },\n      \"2\": {\n        \"value\": \"3\\n\",\n        \"old_index\": 0\n      },\n      \"3\": {\n        \"value\": \"d\\n\",\n        \"old_index\": 0\n      },\n      \"4\": {\n        \"value\": \"e\\n\",\n        \"old_index\": 0\n      },\n      \"5\": {\n        \"value\": \"f\\n\",\n        \"old_index\": 0\n      },\n      \"6\": {\n        \"value\": \"g\\n\",\n        \"old_index\": 0\n      },\n      \"7\": {\n        \"value\": \"4\\n\",\n        \"old_index\": 0\n      }\n    },\n    \"deletion_seq\": {\n    },\n    \"insertions\": 8,\n    \"deletions\": 0,\n    \"diff_cnt\": 8\n  }\n}",
-    "a8cdd76642f0ecda0067f4d780d027935959e42dc16520220f295191b913efba": "{\n  \"name\": \"a\",\n  \"diff\": {\n    \"insertion_seq\": {\n      \"0\": {\n        \"value\": \"a\\n\",\n        \"old_index\": 0\n      },\n      \"1\": {\n        \"value\": \"b\\n\",\n        \"old_index\": 0\n      },\n      \"2\": {\n        \"value\": \"c\\n\",\n        \"old_index\": 0\n      },\n      \"3\": {\n        \"value\": \"d\\n\",\n        \"old_index\": 0\n      },\n      \"4\": {\n        \"value\": \"e\\n\",\n        \"old_index\": 0\n      },\n      \"5\": {\n        \"value\": \"f\\n\",\n        \"old_index\": 0\n      },\n      \"6\": {\n        \"value\": \"g\\n\",\n        \"old_index\": 0\n      },\n      \"7\": {\n        \"value\": \"h\\n\",\n        \"old_index\": 0\n      }\n    },\n    \"deletion_seq\": {\n    },\n    \"insertions\": 8,\n    \"deletions\": 0,\n    \"diff_cnt\": 8\n  }\n}",
-    "397f228d24283cba7278a58bb6b72e15234aa492f1d5ce53f57bbcece7053d56": "{\n  \"name\": \"b\",\n  \"diff\": {\n    \"insertion_seq\": {\n      \"0\": {\n        \"value\": \"a\\n\",\n        \"old_index\": 0\n      },\n      \"1\": {\n        \"value\": \"b\\n\",\n        \"old_index\": 0\n      },\n      \"2\": {\n        \"value\": \"3\\n\",\n        \"old_index\": 0\n      },\n      \"3\": {\n        \"value\": \"d\\n\",\n        \"old_index\": 0\n      },\n      \"4\": {\n        \"value\": \"e\\n\",\n        \"old_index\": 0\n      },\n      \"5\": {\n        \"value\": \"f\\n\",\n        \"old_index\": 0\n      },\n      \"6\": {\n        \"value\": \"g\\n\",\n        \"old_index\": 0\n      },\n      \"7\": {\n        \"value\": \"4\\n\",\n        \"old_index\": 0\n      }\n    },\n    \"deletion_seq\": {\n    },\n    \"insertions\": 8,\n    \"deletions\": 0,\n    \"diff_cnt\": 8\n  }\n}"
+    "a8cdd76642f0ecda0067f4d780d027935959e42dc16520220f295191b913efba": {
+      "name": "a",
+      "insertion_seq": {
+        "0": {
+          "value": "a\n",
+          "old_index": 0
+        },
+        "1": {
+          "value": "b\n",
+          "old_index": 0
+        },
+        "2": {
+          "value": "c\n",
+          "old_index": 0
+        },
+        "3": {
+          "value": "d\n",
+          "old_index": 0
+        },
+        "4": {
+          "value": "e\n",
+          "old_index": 0
+        },
+        "5": {
+          "value": "f\n",
+          "old_index": 0
+        },
+        "6": {
+          "value": "g\n",
+          "old_index": 0
+        },
+        "7": {
+          "value": "h\n",
+          "old_index": 0
+        }
+      },
+      "deletion_seq": {},
+      "insertions": 8,
+      "deletions": 0,
+      "diff_cnt": 8
+    },
+    "397f228d24283cba7278a58bb6b72e15234aa492f1d5ce53f57bbcece7053d56": {
+      "name": "b",
+      "insertion_seq": {
+        "0": {
+          "value": "a\n",
+          "old_index": 0
+        },
+        "1": {
+          "value": "b\n",
+          "old_index": 0
+        },
+        "2": {
+          "value": "3\n",
+          "old_index": 0
+        },
+        "3": {
+          "value": "d\n",
+          "old_index": 0
+        },
+        "4": {
+          "value": "e\n",
+          "old_index": 0
+        },
+        "5": {
+          "value": "f\n",
+          "old_index": 0
+        },
+        "6": {
+          "value": "g\n",
+          "old_index": 0
+        },
+        "7": {
+          "value": "4\n",
+          "old_index": 0
+        }
+      },
+      "deletion_seq": {},
+      "insertions": 8,
+      "deletions": 0,
+      "diff_cnt": 8
+    }
   }
 }
+

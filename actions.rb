@@ -58,42 +58,50 @@ class Actions
       return
     end
     staged = JSON.parse(File.read('.stolen-git/staged.json'), symbolize_names: true)
+
+    router_path = '.stolen-git/router.json'
+    router = JSON.parse(File.read(router_path))
+    diff_calc = DiffCalc.new
     files.each do |file_path|
       file_hash = UTILS.get_file_hash(file_path)
-      router_path = '.stolen-git/router.json'
-      router = JSON.parse(File.read(router_path), symbolize_names: true)
-      diff_calc = DiffCalc.new
       file_content = File.read(file_path)
       if router[file_hash]
         old_file_path = ".stolen-git/last/#{router[file_hash]}"
-        old_content = File.read(".stolen-git/last/#{old_file_path}")
+        old_content = File.read(old_file_path)
+        next if old_content == file_content
+
         diff_calc.compute_diff(old_content.lines.to_a, file_content.lines.to_a)
+
+        # Updating reference file
         File.write(old_file_path, file_content)
       else
         ext = File.extname(file_path)
         name = SecureRandom.uuid
         new_name = "#{name}#{ext}"
+
+        # Creating reference files
         File.write(".stolen-git/last/#{name}#{ext}", file_content)
+
+        # Updating router
         router[file_hash] = new_name
         File.write(router_path, JSON.pretty_generate(router))
+
         diff_calc.compute_diff([], file_content.lines.to_a)
       end
+
       diff = diff_calc.build_sequences
-      staged[:files][file_hash] = JSON.pretty_generate(
-        {
-          name: File.basename(file_path, '.*'),
-          diff: diff
-        }
-      )
+      staged[:files][file_hash] = {
+        name: File.basename(file_path, '.*'),
+        **diff
+      }
       staged[:general_info][:insertions] ||= 0
       staged[:general_info][:insertions] += diff[:insertions]
 
       staged[:general_info][:deletions] ||= 0
       staged[:general_info][:deletions] += diff[:deletions]
     end
+
     File.write('.stolen-git/staged.json', JSON.pretty_generate(staged))
-    puts '*******'
-    puts staged
   end
 
   def test

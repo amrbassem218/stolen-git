@@ -33,10 +33,10 @@ class Actions
       FileUtils.mkdir_p('.stolen-git/last')
 
       # main files
-      File.write('.stolen-git/router.jsonl', {})
+      File.write('.stolen-git/router.json', {})
       File.write('.stolen-git/project_info.json', {})
-      File.write('.stolen-git/commits.jsonl', [])
-      File.write('.stolen-git/staged.json', [])
+      File.write('.stolen-git/commits.json', [])
+      File.write('.stolen-git/staged.json', JSON.pretty_generate({ general_info: {}, files: {} }))
 
       puts "#{NAME.capitalize} initialized Sucessfully :D"
     end
@@ -44,28 +44,47 @@ class Actions
 
   def stage
     files = ARGV
-    puts files
     if files.empty?
       puts 'Usage: stolen-git stage <files..>'
       return
     end
-    files.each do |file|
-      file_hash = UTILS.get_file_hash(file)
+    staged = JSON.parse(File.read('.stolen-git/staged.json'), symbolize_names: true)
+    files.each do |file_path|
+      file_hash = UTILS.get_file_hash(file_path)
       router_path = '.stolen-git/router.json'
-      router = File.read(router_path)
-      puts "'Router not found. run 'stolen-git init' to reinitialize " if router.empty?
-      router = JSON.parse(router)
-      puts "router: #{router}"
+      router = JSON.parse(File.read(router_path), symbolize_names: true)
+      diff_calc = DiffCalc.new
+      file_content = File.read(file_path)
       if router[file_hash]
-        # klasdfj
+        old_file_path = ".stolen-git/last/#{router[file_hash]}"
+        old_content = File.read(".stolen-git/last/#{old_file_path}")
+        diff_calc.compute_diff(old_content.lines.to_a, file_content.lines.to_a)
+        File.write(old_file_path, file_content)
       else
-        ext = File.extname(file)
+        ext = File.extname(file_path)
         name = SecureRandom.uuid
-        file_content = File.read(file)
+        new_name = "#{name}#{ext}"
         File.write(".stolen-git/last/#{name}#{ext}", file_content)
-
+        router[file_hash] = new_name
+        File.write(router_path, JSON.pretty_generate(router))
+        diff_calc.compute_diff([], file_content.lines.to_a)
       end
+      diff = diff_calc.build_sequences
+      staged[:files][file_hash] = JSON.pretty_generate(
+        {
+          name: File.basename(file_path, '.*'),
+          diff: diff
+        }
+      )
+      staged[:general_info][:insertions] ||= 0
+      staged[:general_info][:insertions] += diff[:insertions]
+
+      staged[:general_info][:deletions] ||= 0
+      staged[:general_info][:deletions] += diff[:deletions]
     end
+    File.write('.stolen-git/staged.json', JSON.pretty_generate(staged))
+    puts '*******'
+    puts staged
   end
 
   def test

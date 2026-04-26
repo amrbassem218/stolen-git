@@ -5,6 +5,10 @@ require 'fileutils'
 require 'json'
 UTILS = Utils.new
 class Actions
+  def initialize
+    @staged_default = { general_info: {}, files: {} }
+  end
+
   def p_initialize
     # Check if already initialized
     if File.exist?('.stolen-git')
@@ -36,7 +40,7 @@ class Actions
       File.write('.stolen-git/router.json', {})
       File.write('.stolen-git/project_info.json', {})
       File.write('.stolen-git/commits.json', [])
-      File.write('.stolen-git/staged.json', JSON.pretty_generate({ general_info: {}, files: {} }))
+      File.write('.stolen-git/staged.json', JSON.pretty_generate(@staged_default))
 
       puts "#{NAME.capitalize} initialized Sucessfully :D"
     end
@@ -69,11 +73,11 @@ class Actions
         File.write(old_file_path, file_content)
       else
         ext = File.extname(file_path)
-        name = SecureRandom.uuid
-        new_name = "#{name}#{ext}"
+        stage_id = SecureRandom.uuid
+        new_name = "#{stage_id}#{ext}"
 
         # Creating reference files
-        File.write(".stolen-git/last/#{name}#{ext}", file_content)
+        File.write(".stolen-git/last/#{stage_id}#{ext}", file_content)
 
         # Updating router
         router[file_hash] = new_name
@@ -95,6 +99,25 @@ class Actions
     end
 
     File.write('.stolen-git/staged.json', JSON.pretty_generate(staged))
+  end
+
+  def commit
+    # Get the staged
+    staged = JSON.parse(File.read('.stolen-git/staged.json'), symbolize_names: true)
+
+    if staged == @staged_default
+
+      puts "There are no staged files please run 'stolen-git stage <file>' first"
+
+    else
+      commit_id = SecureRandom.uuid
+      path = ".stolen-git/commits/#{commit_id}.json"
+      File.write(path, JSON.pretty_generate(staged))
+      commit_history = JSON.parse(File.read('.stolen-git/commits.json'))
+      commit_history.push({ commit_id: 'nameless for now', created_at: Time.now, id: commit_id, path: path })
+      File.write('.stolen-git/commits.json', JSON.pretty_generate(commit_history))
+      File.write('.stolen-git/staged.json', JSON.pretty_generate(@staged_default))
+    end
   end
 
   def diff

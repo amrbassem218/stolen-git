@@ -88,7 +88,7 @@ class Actions
 
       diff = diff_calc.build_sequences
       staged[:files][file_hash] = {
-        name: File.basename(file_path, '.*'),
+        name: File.basename(file_path),
         **diff
       }
       staged[:general_info][:insertions] ||= 0

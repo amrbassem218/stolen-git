@@ -112,10 +112,16 @@ class Actions
     else
       commit_id = SecureRandom.uuid
       path = ".stolen-git/commits/#{commit_id}.json"
+
+      # Create a commit file
       File.write(path, JSON.pretty_generate(staged))
+
+      # Add the commit to the commit history
       commit_history = JSON.parse(File.read('.stolen-git/commits.json'))
       commit_history.push({ commit_id: 'nameless for now', created_at: Time.now, id: commit_id, path: path })
       File.write('.stolen-git/commits.json', JSON.pretty_generate(commit_history))
+
+      # reset the stage
       File.write('.stolen-git/staged.json', JSON.pretty_generate(@staged_default))
     end
   end

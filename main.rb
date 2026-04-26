@@ -7,7 +7,6 @@ require_relative 'actions'
 
 command = ARGV.shift
 NAME = 'stolen-git'
-
 actions = Actions.new
 case command
 when 'init'
@@ -23,6 +22,9 @@ when 'test'
 
 when 'stage'
   actions.stage
+
+when 'check_router'
+  actions.check_router
 when 'reset'
   puts 'Reverting to latest changes...'
 

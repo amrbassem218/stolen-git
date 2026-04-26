@@ -42,6 +42,15 @@ class Actions
     end
   end
 
+  def check_router
+    router = JSON.parse(File.read('.stolen-git/router.json'), symbolize_names: true)
+    keys = router.keys
+    keys.each do |key|
+      file_path = UTILS.get_file_from_hash(key, './test')
+      puts file_path || "Couldn't fine file path from this path"
+    end
+  end
+
   def stage
     files = ARGV
     if files.empty?

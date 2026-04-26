@@ -42,15 +42,6 @@ class Actions
     end
   end
 
-  def check_router
-    router = JSON.parse(File.read('.stolen-git/router.json'), symbolize_names: true)
-    keys = router.keys
-    keys.each do |key|
-      file_path = UTILS.get_file_from_hash(key, './test')
-      puts file_path || "Couldn't fine file path from this path"
-    end
-  end
-
   def stage
     files = ARGV
     if files.empty?
@@ -62,9 +53,11 @@ class Actions
     router_path = '.stolen-git/router.json'
     router = JSON.parse(File.read(router_path))
     diff_calc = DiffCalc.new
+
     files.each do |file_path|
       file_hash = UTILS.get_file_hash(file_path)
       file_content = File.read(file_path)
+
       if router[file_hash]
         old_file_path = ".stolen-git/last/#{router[file_hash]}"
         old_content = File.read(old_file_path)
@@ -102,6 +95,28 @@ class Actions
     end
 
     File.write('.stolen-git/staged.json', JSON.pretty_generate(staged))
+  end
+
+  def diff
+    files = ARGV
+    if files.length < 2
+      puts 'Usage: stolen-git diff <first_file> <second_file>'
+    else
+      file_a = File.read(files[0]).split("\n")
+      file_b =  File.read(files[1]).split("\n")
+      diff_calc = DiffCalc.new
+      diff_calc.print_diff(file_a, file_b)
+    end
+  end
+
+  # testers
+  def check_router
+    router = JSON.parse(File.read('.stolen-git/router.json'), symbolize_names: true)
+    keys = router.keys
+    keys.each do |key|
+      file_path = UTILS.get_file_from_hash(key, './test')
+      puts file_path || "Couldn't fine file path from this path"
+    end
   end
 
   def test
@@ -144,17 +159,5 @@ class Actions
     puts "diff_insertions: #{diff[:insertions]}"
     puts "diff_deletions: #{diff[:deletions]}"
     puts "cnt: #{calc.cnt}"
-  end
-
-  def diff
-    files = ARGV
-    if files.length < 2
-      puts 'Usage: stolen-git diff <first_file> <second_file>'
-    else
-      file_a = File.read(files[0]).split("\n")
-      file_b =  File.read(files[1]).split("\n")
-      diff_calc = DiffCalc.new
-      diff_calc.print_diff(file_a, file_b)
-    end
   end
 end

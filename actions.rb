@@ -123,6 +123,12 @@ class Actions
 
       # reset the stage
       File.write('.stolen-git/staged.json', JSON.pretty_generate(@staged_default))
+
+      # print
+      no_files_changed = staged[:files].keys.length
+      no_insertions = staged[:general_info][:insertions]
+      no_deletions = staged[:general_info][:deletions]
+      puts "#{no_files_changed} files changed, #{no_insertions} insertions(+), #{no_deletions} deletions(-)"
     end
   end
 

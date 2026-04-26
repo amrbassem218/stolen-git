@@ -34,13 +34,12 @@ class Actions
 
       # Sub Directories
       FileUtils.mkdir_p('.stolen-git/commits')
-      FileUtils.mkdir_p('.stolen-git/last')
+      FileUtils.mkdir_p('.stolen-git/blobs')
 
       # main files
-      File.write('.stolen-git/router.json', {})
       File.write('.stolen-git/project_info.json', {})
       File.write('.stolen-git/commits.json', [])
-      File.write('.stolen-git/staged.json', JSON.pretty_generate(@staged_default))
+      File.write('.stolen-git/index.json', JSON.pretty_generate(@staged_default))
 
       puts "#{NAME.capitalize} initialized Sucessfully :D"
     end

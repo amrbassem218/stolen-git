@@ -41,7 +41,7 @@ class Actions
 
       # main files
       File.write('.stolen-git/project_info.json', {})
-      File.write('.stolen-git/commits.json', [])
+      File.write('.stolen-git/commits.json', JSON.pretty_generate({ commits: [] }))
       File.write('.stolen-git/index.json', {})
 
       puts "#{NAME.capitalize} initialized Sucessfully :D"
@@ -79,41 +79,96 @@ class Actions
     tree_content = {
       entries: []
     }
+
+    commit_history = JSON.parse(File.read('.stolen-git/commits.json'))
+    parent_commit_exists = commit_history['commits'].length.positive?
+
+    # Getting differences to last commit
+    no_insertions = 0
+    no_deletions = 0
+    no_file_changed = 0
+    parent_commit_hash = ''
+    commit_diff = {}
+
+    if parent_commit_exists
+      parent_commit = commit_history['commits'].last
+      parent_commit_hash = parent_commit['hash']
+
+      parent_commit_content = JSON.parse(File.read(".stolen-git/commits/#{parent_commit_hash}.json"))
+      parent_tree_hash = parent_commit_content['tree_hash']
+      parent_tree_content = JSON.parse(File.read(".stolen-git/storage/trees/#{parent_tree_hash}.json"))
+      parent_tree_content['entries'].each do |entry|
+        # TODO: Handle when path changes across commits
+        new_hash = index[entry['path']]['hash']
+        is_equal = entry['hash'] == new_hash
+        next if is_equal
+
+        entry_content = File.read(".stolen-git/storage/blobs/#{entry['hash']}.json")
+        new_entry_content = File.read(".stolen-git/storage/blobs/#{new_hash}.json")
+        diff_calc = DiffCalc.new
+        diff_calc.compute_diff(entry_content, new_entry_content)
+        diff = diff_calc.build_sequences
+        no_insertions += diff[:insertions]
+        no_deletions += diff[:deletions]
+        no_file_changed += 1
+        commit_diff[entry[:path]] = diff
+        # blob = File.read()
+      end
+    else
+      index.each do |key, value|
+        new_entry_content = File.read(".stolen-git/storage/blobs/#{value['hash']}.json")
+        diff_calc = DiffCalc.new
+        diff_calc.compute_diff('', new_entry_content)
+        diff = diff_calc.build_sequences
+
+        no_insertions += diff[:insertions]
+        no_deletions += diff[:deletions]
+        no_file_changed += 1
+        commit_diff[key] = diff
+      end
+    end
+
+    if no_file_changed <= 0
+      puts 'Everything up to date'
+      puts "If you have changed please 'sotlen-git stage' them first "
+      return
+    end
+    # Making the tree
     index.each do |key, value|
       tree_content[:entries].push({
                                     path: key,
-                                    hash: value
+                                    type: 'blob',
+                                    hash: value['hash'],
+                                    diff: commit_diff[key] || {}
                                   })
     end
-
+    tree_content = JSON.pretty_generate(tree_content)
     tree_hash = UTILS.get_string_hash(tree_content)
-    File.write(".stolen-git/commits/#{tree_hash}.json", tree_content)
+    File.write(".stolen-git/storage/trees/#{tree_hash}.json", tree_content)
 
-    if staged == @staged_default
+    # Making the commit
+    # TODO: Change to actual values when personal profiles are created
+    commit_name = 'test_commit_1'
+    commit_description = 'lorem20'
+    commit_content = {
+      tree_hash: tree_hash,
+      created_at: Time.now,
+      parent_commit: parent_commit_hash,
+      author_profile: {
+        name: 'Amr',
+        email: 'amrbassem218@gmail.com',
+        username: 'amrbassem218'
+      },
+      name: commit_name,
+      description: commit_description
+    }
+    commit_content = JSON.pretty_generate(commit_content)
+    commit_hash = UTILS.get_string_hash(commit_content)
+    File.write(".stolen-git/commits/#{commit_hash}.json", commit_content)
 
-      puts "There are no staged files please run 'stolen-git stage <file>' first"
-
-    else
-      commit_id = SecureRandom.uuid
-      path = ".stolen-git/commits/#{commit_id}.json"
-
-      # Create a commit file
-      File.write(path, JSON.pretty_generate(staged))
-
-      # Add the commit to the commit history
-      commit_history = JSON.parse(File.read('.stolen-git/commits.json'))
-      commit_history.push({ commit_id: 'nameless for now', created_at: Time.now, id: commit_id, path: path })
-      File.write('.stolen-git/commits.json', JSON.pretty_generate(commit_history))
-
-      # reset the stage
-      File.write('.stolen-git/staged.json', JSON.pretty_generate(@staged_default))
-
-      # print
-      no_files_changed = staged[:files].keys.length
-      no_insertions = staged[:general_info][:insertions]
-      no_deletions = staged[:general_info][:deletions]
-      puts "#{no_files_changed} files changed, #{no_insertions} insertions(+), #{no_deletions} deletions(-)"
-    end
+    # Adding commit to history
+    commit_history['commits'].push({ hash: commit_hash, name: commit_name })
+    File.write('.stolen-git/commits.json', JSON.pretty_generate(commit_history))
   end
 
   def diff

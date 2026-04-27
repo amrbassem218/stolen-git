@@ -34,7 +34,10 @@ class Actions
 
       # Sub Directories
       FileUtils.mkdir_p('.stolen-git/commits')
-      FileUtils.mkdir_p('.stolen-git/blobs')
+
+      FileUtils.mkdir_p('.stolen-git/storage')
+      FileUtils.mkdir_p('.stolen-git/storage/blobs')
+      FileUtils.mkdir_p('.stolen-git/storage/trees')
 
       # main files
       File.write('.stolen-git/project_info.json', {})
@@ -60,7 +63,7 @@ class Actions
       next if index[file_path] && index[file_path]['hash'] == file_hash
 
       # Create blob
-      File.write(".stolen-git/blobs/#{file_hash}.json", file_content)
+      File.write(".stolen-git/storage/blobs/#{file_hash}.json", file_content)
 
       # Assign index_obj
       default_index_obj = {}

@@ -103,8 +103,8 @@ class Actions
         is_equal = entry['hash'] == new_hash
         next if is_equal
 
-        entry_content = File.read(".stolen-git/storage/blobs/#{entry['hash']}.json")
-        new_entry_content = File.read(".stolen-git/storage/blobs/#{new_hash}.json")
+        entry_content = File.read(".stolen-git/storage/blobs/#{entry['hash']}.json").lines.to_a
+        new_entry_content = File.read(".stolen-git/storage/blobs/#{new_hash}.json").lines.to_a
         diff_calc = DiffCalc.new
         diff_calc.compute_diff(entry_content, new_entry_content)
         diff = diff_calc.build_sequences
@@ -116,7 +116,7 @@ class Actions
       end
     else
       index.each do |key, value|
-        new_entry_content = File.read(".stolen-git/storage/blobs/#{value['hash']}.json")
+        new_entry_content = File.read(".stolen-git/storage/blobs/#{value['hash']}.json").lines.to_a
         diff_calc = DiffCalc.new
         diff_calc.compute_diff('', new_entry_content)
         diff = diff_calc.build_sequences
@@ -130,9 +130,10 @@ class Actions
 
     if no_file_changed <= 0
       puts 'Everything up to date'
-      puts "If you have changed please 'sotlen-git stage' them first "
+      puts "If you have changed please 'stolen-git stage' them first "
       return
     end
+
     # Making the tree
     index.each do |key, value|
       tree_content[:entries].push({
@@ -160,7 +161,11 @@ class Actions
         username: 'amrbassem218'
       },
       name: commit_name,
-      description: commit_description
+      description: commit_description,
+
+      no_insertions: no_insertions,
+      no_deletions: no_deletions,
+      no_files_changed: no_file_changed
     }
     commit_content = JSON.pretty_generate(commit_content)
     commit_hash = UTILS.get_string_hash(commit_content)
@@ -169,6 +174,9 @@ class Actions
     # Adding commit to history
     commit_history['commits'].push({ hash: commit_hash, name: commit_name })
     File.write('.stolen-git/commits.json', JSON.pretty_generate(commit_history))
+
+    # Print
+    puts "#{no_file_changed} files changed, #{no_insertions} insertions(+), #{no_deletions} deletions(-)"
   end
 
   def diff

@@ -14,6 +14,10 @@ class Utils
     end
   end
 
+  def get_string_hash(str)
+    Digest::SHA256.hexdigest(str)
+  end
+
   def get_file_hash(path)
     Digest::SHA256.file(path).hexdigest
   end

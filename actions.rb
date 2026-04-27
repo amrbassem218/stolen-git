@@ -57,10 +57,6 @@ class Actions
       file_hash = UTILS.get_file_hash(file_path)
       file_content = File.read(file_path)
 
-      # puts "index[file_path]: #{index[file_path]}"
-      # puts "file_path: #{file_path}"
-      # puts "index: #{index}"
-      # puts "index[file_path]['hash']: #{index[file_path]['hash']}" if index[file_path]
       next if index[file_path] && index[file_path]['hash'] == file_hash
 
       # Create blob
@@ -76,7 +72,19 @@ class Actions
 
   def commit
     # Get the staged
-    staged = JSON.parse(File.read('.stolen-git/staged.json'))
+    index = JSON.parse(File.read('.stolen-git/index.json'))
+    tree_content = {
+      entries: []
+    }
+    index.each do |key, value|
+      tree_content[:entries].push({
+                                    path: key,
+                                    hash: value
+                                  })
+    end
+
+    tree_hash = UTILS.get_string_hash(tree_content)
+    File.write(".stolen-git/commits/#{tree_hash}.json", tree_content)
 
     if staged == @staged_default
 

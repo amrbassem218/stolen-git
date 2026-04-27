@@ -6,4 +6,3 @@ e
 f
 g
 h
-edited_text

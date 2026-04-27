@@ -52,28 +52,31 @@ class Actions
       return
     end
 
-    index = JSON.parse(File.read('.stolen-git/index.json'), symbolize_names: true)
+    index = JSON.parse(File.read('.stolen-git/index.json'))
     files.each do |file_path|
       file_hash = UTILS.get_file_hash(file_path)
       file_content = File.read(file_path)
-      file_name = File.basename(file_path)
+
+      # puts "index[file_path]: #{index[file_path]}"
+      # puts "file_path: #{file_path}"
+      # puts "index: #{index}"
+      # puts "index[file_path]['hash']: #{index[file_path]['hash']}" if index[file_path]
+      next if index[file_path] && index[file_path]['hash'] == file_hash
 
       # Create blob
       File.write(".stolen-git/blobs/#{file_hash}.json", file_content)
 
-      # Update Index
-
       # Assign index_obj
       default_index_obj = {}
-      index[file_name] ||= default_index_obj
-      index[file_name][:hash] = file_hash
+      index[file_path] ||= default_index_obj
+      index[file_path]['hash'] = file_hash
     end
     File.write('.stolen-git/index.json', JSON.pretty_generate(index))
   end
 
   def commit
     # Get the staged
-    staged = JSON.parse(File.read('.stolen-git/staged.json'), symbolize_names: true)
+    staged = JSON.parse(File.read('.stolen-git/staged.json'))
 
     if staged == @staged_default
 
@@ -116,7 +119,7 @@ class Actions
 
   # testers
   def check_router
-    router = JSON.parse(File.read('.stolen-git/router.json'), symbolize_names: true)
+    router = JSON.parse(File.read('.stolen-git/router.json'))
     keys = router.keys
     keys.each do |key|
       file_path = UTILS.get_file_from_hash(key, './test')

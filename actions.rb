@@ -84,20 +84,32 @@ module Actions
     }
 
     commit_history = JSON.parse(File.read('.stolen-git/commits.json'))
-    parent_commit_exists = commit_history['commits'].length.positive?
+
+    pointer = read_json('.stolen-git/pointer.json')
+    branch_id = pointer['current_branch']
+    branch_content = read_json(".stolen-git/branches/#{branch_id}.json")
+    parent_commit = branch_content['commit_pointer']
 
     # Getting differences to last commit
     no_insertions = 0
     no_deletions = 0
     no_file_changed = 0
-    current_commit_hash = ''
     commit_diff = {}
 
-    if parent_commit_exists
-      parent_commit = commit_history['commits'].last
-      current_commit_hash = parent_commit['hash']
+    if parent_commit.empty?
+      index.each do |key, value|
+        new_entry_content = File.read(".stolen-git/storage/blobs/#{value['hash']}").lines.to_a
+        compute_diff('', new_entry_content)
+        diff = build_sequences
 
-      parent_commit_content = JSON.parse(File.read(".stolen-git/commits/#{current_commit_hash}.json"))
+        no_insertions += diff[:insertions]
+        no_deletions += diff[:deletions]
+        no_file_changed += 1
+        commit_diff[key] = diff
+      end
+    else
+      parent_commit_content = read_json(".stolen-git/commits/#{parent_commit}.json")
+
       parent_tree_hash = parent_commit_content['tree_hash']
       parent_tree_content = JSON.parse(File.read(".stolen-git/storage/trees/#{parent_tree_hash}.json"))
       parent_tree_content['entries'].each do |entry|
@@ -115,17 +127,6 @@ module Actions
         no_file_changed += 1
         commit_diff[entry[:path]] = diff
         # blob = File.read()
-      end
-    else
-      index.each do |key, value|
-        new_entry_content = File.read(".stolen-git/storage/blobs/#{value['hash']}").lines.to_a
-        compute_diff('', new_entry_content)
-        diff = build_sequences
-
-        no_insertions += diff[:insertions]
-        no_deletions += diff[:deletions]
-        no_file_changed += 1
-        commit_diff[key] = diff
       end
     end
 
@@ -157,7 +158,7 @@ module Actions
       tree_hash: tree_hash,
       created_at: Time.now,
       commit_id: commit_id,
-      parent_commit: current_commit_hash,
+      parent_commit: parent_commit,
       author_profile: {
         name: 'Amr',
         email: 'amrbassem218@gmail.com',
@@ -179,9 +180,6 @@ module Actions
     File.write('.stolen-git/commits.json', JSON.pretty_generate(commit_history))
 
     # Adding to branch
-    pointer = read_json('.stolen-git/pointer.json')
-    branch_id = pointer['current_branch']
-    branch_content = read_json(".stolen-git/branches/#{branch_id}.json")
     branch_content['commit_pointer'] = commit_hash
     File.write(".stolen-git/branches/#{branch_id}.json", JSON.pretty_generate(branch_content))
 

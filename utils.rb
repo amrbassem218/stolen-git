@@ -1,3 +1,4 @@
+require 'fileutils'
 class Utils
   def confirm?(prompt)
     loop do
@@ -16,6 +17,10 @@ class Utils
 
   def get_string_hash(str)
     Digest::SHA256.hexdigest(str)
+  end
+
+  def read_json(path)
+    JSON.parse(File.read(path))
   end
 
   def get_file_hash(path)

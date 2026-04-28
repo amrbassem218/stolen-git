@@ -4,6 +4,7 @@ require_relative 'utils'
 require 'fileutils'
 require 'json'
 UTILS = Utils.new
+$read_json = UTILS.read_json
 class Actions
   def initialize
     @staged_default = { general_info: {}, files: {} }
@@ -151,10 +152,11 @@ class Actions
     # TODO: Change to actual values when personal profiles are created
     commit_name = 'test_commit_1'
     commit_description = 'lorem20'
+    commit_id = SecureRandom.uuid
     commit_content = {
       tree_hash: tree_hash,
       created_at: Time.now,
-      commit_id: SecureRandom.uuid,
+      commit_id: commit_id,
       parent_commit: parent_commit_hash,
       author_profile: {
         name: 'Amr',
@@ -173,14 +175,23 @@ class Actions
     File.write(".stolen-git/commits/#{commit_hash}.json", commit_content)
 
     # Adding commit to history
-    commit_history['commits'].push({ hash: commit_hash, name: commit_name })
+    commit_history['commits'].push({ id: commit_id, hash: commit_hash, name: commit_name })
     File.write('.stolen-git/commits.json', JSON.pretty_generate(commit_history))
 
     # Print
     puts "#{no_file_changed} files changed, #{no_insertions} insertions(+), #{no_deletions} deletions(-)"
   end
 
-  def reset; end
+  def reset
+    commit_id = ARGV.first
+    commit_history = read_json('.stolen-git/commits.json')
+    commit_hash = if commit_id.empty?
+                    commit_history['commits'].last['hash']
+                  else
+                    commit_history['commits'].values.find { |x| x['id'] == commit_id }
+                  end
+    read_json(".stolen-git/commits/#{commit_hash}.json")
+  end
 
   def diff
     files = ARGV

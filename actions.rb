@@ -5,9 +5,6 @@ require 'fileutils'
 require 'json'
 module Actions
   include DiffCalc
-  def initialize
-    @staged_default = { general_info: {}, files: {} }
-  end
 
   def p_initialize
     # Check if already initialized
@@ -34,6 +31,7 @@ module Actions
 
       # Sub Directories
       FileUtils.mkdir_p('.stolen-git/commits')
+      FileUtils.mkdir_p('.stolen-git/branches')
 
       FileUtils.mkdir_p('.stolen-git/storage')
       FileUtils.mkdir_p('.stolen-git/storage/blobs')
@@ -43,8 +41,11 @@ module Actions
       File.write('.stolen-git/project_info.json', {})
       File.write('.stolen-git/commits.json', JSON.pretty_generate({ commits: [] }))
       File.write('.stolen-git/index.json', {})
+      File.write('.stolen-git/pointer.json', {})
+      File.write('.stolen-git/branches/main.json',
+                 JSON.pretty_generate({ name: 'MAIN', last_edited: Time.now, commit_pointer: '' }))
 
-      puts "#{NAME.capitalize} initialized Sucessfully :D"
+      puts 'Stolen-git initialized Sucessfully :D'
     end
   end
 
@@ -189,8 +190,13 @@ module Actions
                   end
     commit_content = read_json(".stolen-git/commits/#{commit_hash}.json")
     commit_tree = read_json(".stolen-git/storage/trees/#{commit_content['tree_hash']}.json")
+    index = read_json('.stolen-git/index.json')
     commit_tree['entries'].each do |entry|
-      File.read(".stolen-git/storage/blobs/#{entry['hash']}")
+      blob = File.read(".stolen-git/storage/blobs/#{entry['hash']}")
+      # TODO: Figure out what to do when path changes
+      File.write(entry['path'], blob)
+      index[entry['path']]['hash'] = entry['hash']
+      File.write('.stolen-git/pointer.json', JSON.pretty_generate({ branch_hash: '' }))
     end
   end
 

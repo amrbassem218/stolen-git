@@ -154,6 +154,7 @@ class Actions
     commit_content = {
       tree_hash: tree_hash,
       created_at: Time.now,
+      commit_id: SecureRandom.uuid,
       parent_commit: parent_commit_hash,
       author_profile: {
         name: 'Amr',
@@ -178,6 +179,8 @@ class Actions
     # Print
     puts "#{no_file_changed} files changed, #{no_insertions} insertions(+), #{no_deletions} deletions(-)"
   end
+
+  def reset; end
 
   def diff
     files = ARGV

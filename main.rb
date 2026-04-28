@@ -22,8 +22,7 @@ when 'stage'
 when 'check_router'
   check_router
 when 'reset'
-  puts 'Reverting to latest changes...'
-
+  reset
 when 'help'
   puts print_usage
   exit 1

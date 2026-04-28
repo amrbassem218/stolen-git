@@ -41,10 +41,12 @@ module Actions
       File.write('.stolen-git/project_info.json', {})
       File.write('.stolen-git/commits.json', JSON.pretty_generate({ commits: [] }))
       File.write('.stolen-git/index.json', {})
-      File.write('.stolen-git/pointer.json', {})
-      File.write('.stolen-git/branches/main.json',
-                 JSON.pretty_generate({ name: 'MAIN', last_edited: Time.now, commit_pointer: '' }))
 
+      main_branch_id = SecureRandom.uuid
+      File.write(".stolen-git/branches/#{main_branch_id}.json",
+                 JSON.pretty_generate({ name: 'main', last_edited: Time.now, commit_pointer: '' }))
+
+      File.write('.stolen-git/pointer.json', JSON.pretty_generate({ current_branch: main_branch_id }))
       puts 'Stolen-git initialized Sucessfully :D'
     end
   end
@@ -88,14 +90,14 @@ module Actions
     no_insertions = 0
     no_deletions = 0
     no_file_changed = 0
-    parent_commit_hash = ''
+    current_commit_hash = ''
     commit_diff = {}
 
     if parent_commit_exists
       parent_commit = commit_history['commits'].last
-      parent_commit_hash = parent_commit['hash']
+      current_commit_hash = parent_commit['hash']
 
-      parent_commit_content = JSON.parse(File.read(".stolen-git/commits/#{parent_commit_hash}.json"))
+      parent_commit_content = JSON.parse(File.read(".stolen-git/commits/#{current_commit_hash}.json"))
       parent_tree_hash = parent_commit_content['tree_hash']
       parent_tree_content = JSON.parse(File.read(".stolen-git/storage/trees/#{parent_tree_hash}.json"))
       parent_tree_content['entries'].each do |entry|
@@ -155,7 +157,7 @@ module Actions
       tree_hash: tree_hash,
       created_at: Time.now,
       commit_id: commit_id,
-      parent_commit: parent_commit_hash,
+      parent_commit: current_commit_hash,
       author_profile: {
         name: 'Amr',
         email: 'amrbassem218@gmail.com',
@@ -176,6 +178,13 @@ module Actions
     commit_history['commits'].push({ id: commit_id, hash: commit_hash, name: commit_name })
     File.write('.stolen-git/commits.json', JSON.pretty_generate(commit_history))
 
+    # Adding to branch
+    pointer = read_json('.stolen-git/pointer.json')
+    branch_id = pointer['current_branch']
+    branch_content = read_json(".stolen-git/branches/#{branch_id}.json")
+    branch_content['commit_pointer'] = commit_hash
+    File.write(".stolen-git/branches/#{branch_id}.json", JSON.pretty_generate(branch_content))
+
     # Print
     puts "#{no_file_changed} files changed, #{no_insertions} insertions(+), #{no_deletions} deletions(-)"
   end
@@ -183,12 +192,22 @@ module Actions
   def reset
     commit_id = ARGV.first
     commit_history = read_json('.stolen-git/commits.json')
-    commit_hash = if commit_id.empty?
-                    commit_history['commits'].last['hash']
-                  else
-                    commit_history['commits'].values.find { |x| x['id'] == commit_id }
-                  end
-    commit_content = read_json(".stolen-git/commits/#{commit_hash}.json")
+    pointer = read_json('.stolen-git/pointer.json')
+    branch_id = pointer['current_branch']
+    branch_content = read_json(".stolen-git/branches/#{branch_id}.json")
+    current_commit_hash = if !commit_id || commit_id.empty?
+                            branch_content['commit_pointer']
+                          else
+                            commit_history['commits'].values.find { |x| x['id'] == commit_id }['hash']
+                          end
+
+    parent_commit_hash = read_json(".stolen-git/commits/#{current_commit_hash}.json")['parent_commit']
+
+    if parent_commit_hash.empty?
+      puts "The current commit is the earliest in the project. Can't reset behind that."
+      return
+    end
+    commit_content = read_json(".stolen-git/commits/#{parent_commit_hash}.json")
     commit_tree = read_json(".stolen-git/storage/trees/#{commit_content['tree_hash']}.json")
     index = read_json('.stolen-git/index.json')
     commit_tree['entries'].each do |entry|
@@ -196,8 +215,13 @@ module Actions
       # TODO: Figure out what to do when path changes
       File.write(entry['path'], blob)
       index[entry['path']]['hash'] = entry['hash']
-      File.write('.stolen-git/pointer.json', JSON.pretty_generate({ branch_hash: '' }))
+      branch_content['commit_pointer'] = parent_commit_hash
+
+      puts "entry_path: #{entry['path']}"
+      puts "blob: #{blob}"
     end
+    File.write('.stolen-git/index.json', JSON.pretty_generate(index))
+    File.write(".stolen-git/branches/#{branch_id}.json", JSON.pretty_generate(branch_content))
   end
 
   def diff

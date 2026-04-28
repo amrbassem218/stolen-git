@@ -1,5 +1,7 @@
 require 'fileutils'
-class Utils
+require 'optparse'
+require 'digest'
+module Utils
   def confirm?(prompt)
     loop do
       print "#{prompt} (y/n): "
@@ -37,3 +39,5 @@ class Utils
     nil
   end
 end
+
+include Utils

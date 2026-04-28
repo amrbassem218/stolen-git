@@ -1,5 +1,5 @@
 require 'colorize'
-class DiffCalc
+module DiffCalc
   attr_reader :mem, :cnt, :old_s, :new_s
 
   def initialize

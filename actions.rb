@@ -3,9 +3,8 @@ require_relative 'differencing'
 require_relative 'utils'
 require 'fileutils'
 require 'json'
-UTILS = Utils.new
-$read_json = UTILS.read_json
-class Actions
+module Actions
+  include DiffCalc
   def initialize
     @staged_default = { general_info: {}, files: {} }
   end
@@ -13,8 +12,8 @@ class Actions
   def p_initialize
     # Check if already initialized
     if File.exist?('.stolen-git')
-      if UTILS.confirm?('An instance of stolen-git is already up here do you want to replace it')
-        if UTILS.confirm?('THIS WILL DELETE ALL COMMITS AND INSTANCES OF stolen-git. ARE YOU SURE')
+      if confirm?('An instance of stolen-git is already up here do you want to replace it')
+        if confirm?('THIS WILL DELETE ALL COMMITS AND INSTANCES OF stolen-git. ARE YOU SURE')
           FileUtils.rm_rf('.stolen-git')
 
           if File.exist?('.stolen-git')
@@ -58,13 +57,13 @@ class Actions
 
     index = JSON.parse(File.read('.stolen-git/index.json'))
     files.each do |file_path|
-      file_hash = UTILS.get_file_hash(file_path)
+      file_hash = get_file_hash(file_path)
       file_content = File.read(file_path)
 
       next if index[file_path] && index[file_path]['hash'] == file_hash
 
       # Create blob
-      File.write(".stolen-git/storage/blobs/#{file_hash}.json", file_content)
+      File.write(".stolen-git/storage/blobs/#{file_hash}", file_content)
 
       # Assign index_obj
       default_index_obj = {}
@@ -104,11 +103,10 @@ class Actions
         is_equal = entry['hash'] == new_hash
         next if is_equal
 
-        entry_content = File.read(".stolen-git/storage/blobs/#{entry['hash']}.json").lines.to_a
-        new_entry_content = File.read(".stolen-git/storage/blobs/#{new_hash}.json").lines.to_a
-        diff_calc = DiffCalc.new
-        diff_calc.compute_diff(entry_content, new_entry_content)
-        diff = diff_calc.build_sequences
+        entry_content = File.read(".stolen-git/storage/blobs/#{entry['hash']}").lines.to_a
+        new_entry_content = File.read(".stolen-git/storage/blobs/#{new_hash}").lines.to_a
+        compute_diff(entry_content, new_entry_content)
+        diff = build_sequences
         no_insertions += diff[:insertions]
         no_deletions += diff[:deletions]
         no_file_changed += 1
@@ -117,10 +115,9 @@ class Actions
       end
     else
       index.each do |key, value|
-        new_entry_content = File.read(".stolen-git/storage/blobs/#{value['hash']}.json").lines.to_a
-        diff_calc = DiffCalc.new
-        diff_calc.compute_diff('', new_entry_content)
-        diff = diff_calc.build_sequences
+        new_entry_content = File.read(".stolen-git/storage/blobs/#{value['hash']}").lines.to_a
+        compute_diff('', new_entry_content)
+        diff = build_sequences
 
         no_insertions += diff[:insertions]
         no_deletions += diff[:deletions]
@@ -145,7 +142,7 @@ class Actions
                                   })
     end
     tree_content = JSON.pretty_generate(tree_content)
-    tree_hash = UTILS.get_string_hash(tree_content)
+    tree_hash = get_string_hash(tree_content)
     File.write(".stolen-git/storage/trees/#{tree_hash}.json", tree_content)
 
     # Making the commit
@@ -171,7 +168,7 @@ class Actions
       no_files_changed: no_file_changed
     }
     commit_content = JSON.pretty_generate(commit_content)
-    commit_hash = UTILS.get_string_hash(commit_content)
+    commit_hash = get_string_hash(commit_content)
     File.write(".stolen-git/commits/#{commit_hash}.json", commit_content)
 
     # Adding commit to history
@@ -190,7 +187,11 @@ class Actions
                   else
                     commit_history['commits'].values.find { |x| x['id'] == commit_id }
                   end
-    read_json(".stolen-git/commits/#{commit_hash}.json")
+    commit_content = read_json(".stolen-git/commits/#{commit_hash}.json")
+    commit_tree = read_json(".stolen-git/storage/trees/#{commit_content['tree_hash']}.json")
+    commit_tree['entries'].each do |entry|
+      File.read(".stolen-git/storage/blobs/#{entry['hash']}")
+    end
   end
 
   def diff
@@ -199,9 +200,8 @@ class Actions
       puts 'Usage: stolen-git diff <first_file> <second_file>'
     else
       file_a = File.read(files[0]).split("\n")
-      file_b =  File.read(files[1]).split("\n")
-      diff_calc = DiffCalc.new
-      diff_calc.print_diff(file_a, file_b)
+      file_b = File.read(files[1]).split("\n")
+      print_diff(file_a, file_b)
     end
   end
 
@@ -210,7 +210,7 @@ class Actions
     router = JSON.parse(File.read('.stolen-git/router.json'))
     keys = router.keys
     keys.each do |key|
-      file_path = UTILS.get_file_from_hash(key, './test')
+      file_path = get_file_from_hash(key, './test')
       puts file_path || "Couldn't fine file path from this path"
     end
   end
@@ -227,7 +227,6 @@ class Actions
   k
   c
   d"
-    calc = DiffCalc.new
 
     tests = ARGV
     puts "tests: #{tests}"

@@ -1,30 +1,26 @@
-require 'optparse'
-require 'digest'
-require_relative 'differencing'
 require_relative 'help'
-require_relative 'utils'
 require_relative 'actions'
 
 command = ARGV.shift
 NAME = 'stolen-git'
-actions = Actions.new
+include Actions
 case command
 when 'init'
-  actions.p_initialize
+  p_initialize
 
 when 'commit'
-  actions.commit
+  commit
 
 when 'diff'
-  actions.diff
+  diff
 when 'test'
-  actions.test
+  test
 
 when 'stage'
-  actions.stage
+  stage
 
 when 'check_router'
-  actions.check_router
+  check_router
 when 'reset'
   puts 'Reverting to latest changes...'
 

@@ -9,8 +9,8 @@ module DiffCalc
 
   def compute_diff(old_arr, new_arr)
     @mem = {}
-    @old_s = old_arr
-    @new_s = new_arr
+    @old_s = old_arr.is_a?(String) ? old_arr.split("\n").to_a : old_arr
+    @new_s = new_arr.is_a?(String) ? new_arr.split("\n").to_a : new_arr
     differencing(0, 0)
   end
 
@@ -103,7 +103,8 @@ module DiffCalc
     insertions, deletions, insertion_seq, deletion_seq = diff.values_at(:insertions, :deletions, :insertion_seq,
                                                                         :deletion_seq)
     # printing diff
-    puts "Diff: (+): #{insertions}    (-): #{deletions}"
+    print "   (+): #{insertions}".green
+    print "   (-): #{deletions}\n".red
 
     # sorting by keys
     insertion_seq = insertion_seq.sort.to_h
@@ -137,7 +138,7 @@ module DiffCalc
         deletion_seq[index] = deletion_seq[index].sort_by { |del| del[:old_index] }
         deletion_seq[index].each do |del|
           old_index = del[:old_index]
-          edit_list.push({ index: index, value: "#{file_a[old_index]}", type: -1,
+          edit_list.push({ index: index, value: "#{@old_s[old_index]}", type: -1,
                            old_index: old_index })
         end
         deletion_pointer += 1
@@ -150,9 +151,9 @@ module DiffCalc
     # Getting all the lines to print (including context ones)
     edit_list.each_with_index do |order, _i|
       (order[:index] - max_space_diff..order[:index] + max_space_diff).each do |j|
-        next unless j >= 0 && j < file_b.length
+        next unless j >= 0 && j < @new_s.length
 
-        line = order[:index] == j ? order : { index: j, value: file_b[j], type: 1, old_index: j }
+        line = order[:index] == j ? order : { index: j, value: @new_s[j], type: 1, old_index: j }
         print_queue[j] ||= []
         print_queue[j].push(line) unless line[:type] == 1 && print_queue[j].length.positive?
       end
@@ -175,7 +176,7 @@ module DiffCalc
               else
                 line[:index]
               end
-      print_text = "#{index} #{sign}#{line[:value]}"
+      print_text = "(#{index}) #{sign}#{line[:value]}"
       if line[:type] == -1
         print_text = print_text.red
       elsif line[:type] == 0

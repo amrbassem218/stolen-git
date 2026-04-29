@@ -251,13 +251,21 @@ module Actions
   end
 
   def diff
-    files = ARGV
-    if files.length < 2
-      puts 'Usage: stolen-git diff <first_file> <second_file>'
-    else
-      file_a = File.read(files[0]).split("\n")
-      file_b = File.read(files[1]).split("\n")
-      print_diff(file_a, file_b)
+    index = read_json('.stolen-git/index.json')
+    index.each do |key, value|
+      new_file_content = File.exist?(key) ? File.read(key) : nil
+      file_name = File.basename(key)
+      if new_file_content.nil?
+        print "@@#{file_name}".cyan
+        print " [DELETED]]\n".red
+      else
+        new_hash = get_file_hash(key)
+        next if new_hash == value['hash']
+
+        print "@@#{file_name}".cyan
+        blob_content = File.read(".stolen-git/storage/blobs/#{value['hash']}")
+        print_diff(blob_content, new_file_content)
+      end
     end
   end
 

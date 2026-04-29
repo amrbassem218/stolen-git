@@ -219,13 +219,14 @@ module Actions
     pointer = read_json('.stolen-git/pointer.json')
     branch_id = pointer['current_branch']
     branch_content = read_json(".stolen-git/branches/#{branch_id}.json")
-    current_commit_hash = if !commit_id || commit_id.empty?
-                            branch_content['commit_pointer']
-                          else
-                            commit_history['commits'].values.find { |x| x['id'] == commit_id }['hash']
-                          end
+    current_commit_hash = branch_content['commit_pointer']
+    parent_commit_hash = if !commit_id || commit_id.empty?
+                           read_json(".stolen-git/commits/#{current_commit_hash}.json")['parent_commit']
+                         else
+                           commit_history['commits'].find { |x| x['id'] == commit_id }['hash']
+                         end
 
-    parent_commit_hash = read_json(".stolen-git/commits/#{current_commit_hash}.json")['parent_commit']
+    puts "current_commit_hash: #{current_commit_hash}"
 
     if parent_commit_hash.empty?
       puts "The current commit is the earliest in the project. Can't reset behind that."
@@ -233,11 +234,12 @@ module Actions
     end
     commit_content = read_json(".stolen-git/commits/#{parent_commit_hash}.json")
     commit_tree = read_json(".stolen-git/storage/trees/#{commit_content['tree_hash']}.json")
-    index = read_json('.stolen-git/index.json')
+    index = {}
     commit_tree['entries'].each do |entry|
       blob = File.read(".stolen-git/storage/blobs/#{entry['hash']}")
       # TODO: Figure out what to do when path changes
       File.write(entry['path'], blob)
+      index[entry['path']] ||= {}
       index[entry['path']]['hash'] = entry['hash']
       branch_content['commit_pointer'] = parent_commit_hash
 

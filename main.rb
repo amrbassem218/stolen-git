@@ -23,6 +23,8 @@ when 'check_router'
   check_router
 when 'reset'
   reset
+when 'log'
+  log
 when 'help'
   puts print_usage
   exit 1

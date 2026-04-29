@@ -3,6 +3,7 @@ require 'optparse'
 require_relative 'differencing'
 require_relative 'utils'
 require 'fileutils'
+require 'colorize'
 require 'json'
 module Actions
   include DiffCalc
@@ -182,7 +183,7 @@ module Actions
     commit_content = {
       tree_hash: tree_hash,
       created_at: Time.now,
-      commit_id: commit_id,
+      id: commit_id,
       parent_commit: parent_commit,
       author_profile: {
         name: 'Amr',
@@ -255,6 +256,30 @@ module Actions
       file_a = File.read(files[0]).split("\n")
       file_b = File.read(files[1]).split("\n")
       print_diff(file_a, file_b)
+    end
+  end
+
+  def log
+    limit = ARGV.last
+    limit = limit && !limit.empty? ? limit.to_i : 0
+    commit_history_content = read_json('.stolen-git/commits.json')
+
+    # puts "commits? #{commit_history_content['commits']}"
+    commit_history_content['commits'].each_with_index do |commit, i|
+      break if limit > 0 && i >= limit
+
+      if limit == 0 && i >= 5
+        q = ask(':')
+        break if q == 'q'
+      end
+      commit_content = read_json(".stolen-git/commits/#{commit['hash']}.json")
+      puts
+      puts "commit #{commit_content['id']}".green
+      puts "Author #{commit_content['author_profile']['username']} <#{commit_content['author_profile']['email']}>"
+      puts "Date: #{commit_content['created_at']}"
+      puts
+      puts "    #{commit_content['name']}"
+      puts
     end
   end
 

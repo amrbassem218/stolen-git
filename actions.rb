@@ -1,4 +1,5 @@
 require 'securerandom'
+require 'optparse'
 require_relative 'differencing'
 require_relative 'utils'
 require 'fileutils'
@@ -73,11 +74,29 @@ module Actions
       index[file_path] ||= default_index_obj
       index[file_path]['hash'] = file_hash
     end
+    index = index.sort.to_h
     File.write('.stolen-git/index.json', JSON.pretty_generate(index))
   end
 
   def commit
-    # Get the staged
+    options = { name: '', description: '' }
+
+    # Getting commit name & description
+    OptionParser.new do |opts|
+      opts.banner = 'Usage: stolen-git commit [options]'
+
+      opts.on('-n', '--name NAME', 'Add a commit name') do |name|
+        options[:name] = name
+      end
+
+      opts.on('-d', '--description DESCRIPTION', 'Add a commit description') do |description|
+        options[:description] = description
+      end
+    end.parse!
+
+    options[:name] = ask('Add a commit name: ') if options[:name].empty?
+
+    # Get the index
     index = JSON.parse(File.read('.stolen-git/index.json'))
     tree_content = {
       entries: []
@@ -91,43 +110,50 @@ module Actions
     parent_commit = branch_content['commit_pointer']
 
     # Getting differences to last commit
+
     no_insertions = 0
     no_deletions = 0
     no_file_changed = 0
     commit_diff = {}
 
-    if parent_commit.empty?
-      index.each do |key, value|
-        new_entry_content = File.read(".stolen-git/storage/blobs/#{value['hash']}").lines.to_a
-        compute_diff('', new_entry_content)
-        diff = build_sequences
+    getting_diff = lambda do |entries|
+      parent_index = 0
 
-        no_insertions += diff[:insertions]
-        no_deletions += diff[:deletions]
-        no_file_changed += 1
-        commit_diff[key] = diff
+      index.each do |key, value|
+        if entries && entries[parent_index] && key == entries[parent_index]['path']
+          new_hash = value['hash']
+          old_hash = entries[parent_index]['hash']
+          parent_index += 1
+          next if value['hash'] == new_hash
+
+          entry_content = File.read(".stolen-git/storage/blobs/#{old_hash}").lines.to_a
+          new_entry_content = File.read(".stolen-git/storage/blobs/#{new_hash}").lines.to_a
+          compute_diff(entry_content, new_entry_content)
+          diff = build_sequences
+          no_insertions += diff[:insertions]
+          no_deletions += diff[:deletions]
+          no_file_changed += 1
+          commit_diff[key] = diff
+        else
+          new_entry_content = File.read(".stolen-git/storage/blobs/#{value['hash']}").lines.to_a
+          compute_diff('', new_entry_content)
+          diff = build_sequences
+
+          no_insertions += diff[:insertions]
+          no_deletions += diff[:deletions]
+          no_file_changed += 1
+          commit_diff[key] = diff
+        end
       end
+    end
+
+    if parent_commit.empty?
+      getting_diff.call(nil)
     else
       parent_commit_content = read_json(".stolen-git/commits/#{parent_commit}.json")
-
       parent_tree_hash = parent_commit_content['tree_hash']
       parent_tree_content = JSON.parse(File.read(".stolen-git/storage/trees/#{parent_tree_hash}.json"))
-      parent_tree_content['entries'].each do |entry|
-        # TODO: Handle when path changes across commits
-        new_hash = index[entry['path']]['hash']
-        is_equal = entry['hash'] == new_hash
-        next if is_equal
-
-        entry_content = File.read(".stolen-git/storage/blobs/#{entry['hash']}").lines.to_a
-        new_entry_content = File.read(".stolen-git/storage/blobs/#{new_hash}").lines.to_a
-        compute_diff(entry_content, new_entry_content)
-        diff = build_sequences
-        no_insertions += diff[:insertions]
-        no_deletions += diff[:deletions]
-        no_file_changed += 1
-        commit_diff[entry[:path]] = diff
-        # blob = File.read()
-      end
+      getting_diff.call(parent_tree_content['entries'])
     end
 
     if no_file_changed <= 0
@@ -145,14 +171,13 @@ module Actions
                                     diff: commit_diff[key] || {}
                                   })
     end
+    tree_content[:entries] = tree_content[:entries].sort { |a, b| a['path'] <=> b['path'] }
     tree_content = JSON.pretty_generate(tree_content)
     tree_hash = get_string_hash(tree_content)
     File.write(".stolen-git/storage/trees/#{tree_hash}.json", tree_content)
 
     # Making the commit
     # TODO: Change to actual values when personal profiles are created
-    commit_name = 'test_commit_1'
-    commit_description = 'lorem20'
     commit_id = SecureRandom.uuid
     commit_content = {
       tree_hash: tree_hash,
@@ -164,8 +189,8 @@ module Actions
         email: 'amrbassem218@gmail.com',
         username: 'amrbassem218'
       },
-      name: commit_name,
-      description: commit_description,
+      name: options[:name],
+      description: options[:description],
 
       no_insertions: no_insertions,
       no_deletions: no_deletions,
@@ -176,7 +201,7 @@ module Actions
     File.write(".stolen-git/commits/#{commit_hash}.json", commit_content)
 
     # Adding commit to history
-    commit_history['commits'].push({ id: commit_id, hash: commit_hash, name: commit_name })
+    commit_history['commits'].push({ id: commit_id, hash: commit_hash, name: options[:name] })
     File.write('.stolen-git/commits.json', JSON.pretty_generate(commit_history))
 
     # Adding to branch

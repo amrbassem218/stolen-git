@@ -17,6 +17,11 @@ module Utils
     end
   end
 
+  def ask(prompt)
+    print prompt
+    gets.chomp
+  end
+
   def get_string_hash(str)
     Digest::SHA256.hexdigest(str)
   end

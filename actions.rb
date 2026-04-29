@@ -185,6 +185,7 @@ module Actions
       created_at: Time.now,
       id: commit_id,
       parent_commit: parent_commit,
+      branch_id: branch_id,
       author_profile: {
         name: 'Amr',
         email: 'amrbassem218@gmail.com',

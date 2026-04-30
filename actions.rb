@@ -259,9 +259,13 @@ module Actions
     else
       # TODO: Handle if user enters branch_id instead
       branch_content = {}
-      Dir.entries('.stolen-git/branches').each do |entry|
-        branch_content = read_json(entry)
-        break if branch_content['name'] == inp
+      branch_id = ''
+      Dir.children('.stolen-git/branches').each do |entry|
+        branch_content = read_json(".stolen-git/branches/#{entry}")
+        if branch_content['name'] == inp
+          branch_id = File.basename(entry, '.*')
+          break
+        end
       end
       if branch_content.empty?
         puts 'There is no branch with that name.'
@@ -270,8 +274,9 @@ module Actions
       commit_hash = branch_content['commit_pointer']
       revert_to_commit(commit_hash)
       pointer = read_json('.stolen-git/pointer.json')
-      pointer['point_to'] = branch_content['id']
+      pointer['point_to'] = branch_id
       pointer['type'] = 'branch'
+      File.write('.stolen-git/pointer.json', JSON.pretty_generate(pointer))
     end
   end
 
@@ -280,7 +285,7 @@ module Actions
     pointer = read_json('.stolen-git/pointer.json')
     pointed_branch = pointer['type'] == 'branch' ? pointer['point_to'] : ''
     if name
-      first_commit = pointer['type'] == 'branch' ? pointed_branch['commit_pointer'] : pointer['point_to']
+      first_commit = pointer['type'] == 'branch' ? read_json(".stolen-git/branches/#{pointed_branch}.json")['commit_pointer'] : pointer['point_to']
       id = SecureRandom.uuid
       File.write(".stolen-git/branches/#{id}.json", JSON.pretty_generate({
                                                                            name: name,

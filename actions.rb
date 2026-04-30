@@ -46,9 +46,9 @@ module Actions
 
       main_branch_id = SecureRandom.uuid
       File.write(".stolen-git/branches/#{main_branch_id}.json",
-                 JSON.pretty_generate({ name: 'main', last_edited: Time.now, commit_pointer: '' }))
+                 JSON.pretty_generate({ name: 'main', created_at: Time.now, commit_pointer: '' }))
 
-      File.write('.stolen-git/pointer.json', JSON.pretty_generate({ current_branch: main_branch_id, type: 'branch' }))
+      File.write('.stolen-git/pointer.json', JSON.pretty_generate({ point_to: main_branch_id, type: 'branch' }))
       puts 'Stolen-git initialized Sucessfully :D'
     end
   end
@@ -276,11 +276,24 @@ module Actions
   end
 
   def branch
+    name = ARGV.last
     pointer = read_json('.stolen-git/pointer.json')
     pointed_branch = pointer['type'] == 'branch' ? pointer['point_to'] : ''
+    if name
+      first_commit = pointer['type'] == 'branch' ? pointed_branch['commit_pointer'] : pointer['point_to']
+      id = SecureRandom.uuid
+      File.write(".stolen-git/branches/#{id}.json", JSON.pretty_generate({
+                                                                           name: name,
+                                                                           created_at: Time.now,
+                                                                           commit_pointer: first_commit
+                                                                         }))
+      return
+      puts "branch #{name} created"
+    end
     Dir.children('.stolen-git/branches').each do |entry|
       branch_content = read_json(".stolen-git/branches/#{entry}")
-      if pointed_branch['id'] == branch_content['id']
+      branch_id = File.basename(entry, '.*')
+      if pointed_branch == branch_id
         print '* '
         puts "#{branch_content['name']}".green
       else

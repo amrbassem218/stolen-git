@@ -159,7 +159,7 @@ module Actions
 
     if no_file_changed <= 0
       puts 'Everything up to date'
-      puts "If you have changed please 'stolen-git stage' them first "
+      puts "If you have changed please 'stg stage' them first "
       return
     end
 

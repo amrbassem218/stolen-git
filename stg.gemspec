@@ -1,6 +1,6 @@
 Gem::Specification.new do |spec|
   spec.name          = 'stg'
-  spec.version       = '0.1.0'
+  spec.version       = '0.1.1'
   spec.authors       = ['Amr ElTaweel']
   spec.email         = ['amrbeducation@gmail.com']
 

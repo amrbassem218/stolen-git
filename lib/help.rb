@@ -1,12 +1,18 @@
 module Help
   def print_usage
-    usage_error_message = "Usage: stolen-git <command> [options]
+    usage_error_message = "Usage: stg <command> [options]
 
   Commands:\n"
     commands_docs = {
-      commit: 'Save changes',
+      init: 'Initialize the project',
+      stage: 'add a file or directory to be tracked ',
+      commit: 'Save the current tracked state ',
+      diff: 'get the difference between working directory and the last commit ',
+      log: 'print out commit history (limit print by a number `log <number>`) ',
       reset: 'Revert to commit',
-      init: 'Initialize stolen-git to start tracking'
+      checkout: 'check a commit or a branch without loss in data',
+      branch: 'List all branches. (or creating a branch by `branch <name>`) '
+
     }
     max_len = 0
     commands_docs.each_key do |command|

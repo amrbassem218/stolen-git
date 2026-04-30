@@ -4,6 +4,7 @@ require_relative 'actions'
 command = ARGV.shift
 NAME = 'stolen-git'
 include Actions
+include Help
 case command
 when 'init'
   p_initialize

@@ -1,4 +1,4 @@
-class Help
+module Help
   def print_usage
     usage_error_message = "Usage: stolen-git <command> [options]
 

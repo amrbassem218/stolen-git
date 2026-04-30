@@ -227,8 +227,6 @@ module Actions
                            commit_history['commits'].find { |x| x['id'] == commit_id }['hash']
                          end
 
-    puts "current_commit_hash: #{current_commit_hash}"
-
     if parent_commit_hash.empty?
       puts "The current commit is the earliest in the project. Can't reset behind that."
       return
@@ -331,7 +329,6 @@ module Actions
     limit = limit && !limit.empty? ? limit.to_i : 0
     commit_history_content = read_json('.stolen-git/commits.json')
 
-    # puts "commits? #{commit_history_content['commits']}"
     commit_history_content['commits'].each_with_index do |commit, i|
       break if limit > 0 && i >= limit
 

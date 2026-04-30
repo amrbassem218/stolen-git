@@ -25,8 +25,13 @@ when 'reset'
   reset
 when 'log'
   log
+
 when 'checkout'
   checkout
+
+when 'branch'
+  branch
+
 when 'help'
   puts print_usage
   exit 1

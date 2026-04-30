@@ -48,7 +48,7 @@ module Actions
       File.write(".stolen-git/branches/#{main_branch_id}.json",
                  JSON.pretty_generate({ name: 'main', last_edited: Time.now, commit_pointer: '' }))
 
-      File.write('.stolen-git/pointer.json', JSON.pretty_generate({ current_branch: main_branch_id }))
+      File.write('.stolen-git/pointer.json', JSON.pretty_generate({ current_branch: main_branch_id, type: 'branch' }))
       puts 'Stolen-git initialized Sucessfully :D'
     end
   end
@@ -106,7 +106,7 @@ module Actions
     commit_history = JSON.parse(File.read('.stolen-git/commits.json'))
 
     pointer = read_json('.stolen-git/pointer.json')
-    branch_id = pointer['current_branch']
+    branch_id = pointer['point_to']
     branch_content = read_json(".stolen-git/branches/#{branch_id}.json")
     parent_commit = branch_content['commit_pointer']
 
@@ -218,7 +218,7 @@ module Actions
     commit_id = ARGV.first
     commit_history = read_json('.stolen-git/commits.json')
     pointer = read_json('.stolen-git/pointer.json')
-    branch_id = pointer['current_branch']
+    branch_id = pointer['point_to']
     branch_content = read_json(".stolen-git/branches/#{branch_id}.json")
     current_commit_hash = branch_content['commit_pointer']
     parent_commit_hash = if !commit_id || commit_id.empty?
@@ -270,8 +270,22 @@ module Actions
       commit_hash = branch_content['commit_pointer']
       revert_to_commit(commit_hash)
       pointer = read_json('.stolen-git/pointer.json')
-      pointer['current_branch'] = branch_content['id']
+      pointer['point_to'] = branch_content['id']
+      pointer['type'] = 'branch'
+    end
+  end
 
+  def branch
+    pointer = read_json('.stolen-git/pointer.json')
+    pointed_branch = pointer['type'] == 'branch' ? pointer['point_to'] : ''
+    Dir.children('.stolen-git/branches').each do |entry|
+      branch_content = read_json(".stolen-git/branches/#{entry}")
+      if pointed_branch['id'] == branch_content['id']
+        print '* '
+        puts "#{branch_content['name']}".green
+      else
+        puts "#{branch_content['name']}"
+      end
     end
   end
 

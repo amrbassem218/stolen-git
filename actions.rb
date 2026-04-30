@@ -233,18 +233,8 @@ module Actions
       puts "The current commit is the earliest in the project. Can't reset behind that."
       return
     end
-    commit_content = read_json(".stolen-git/commits/#{parent_commit_hash}.json")
-    commit_tree = read_json(".stolen-git/storage/trees/#{commit_content['tree_hash']}.json")
-    index = {}
-    commit_tree['entries'].each do |entry|
-      blob = File.read(".stolen-git/storage/blobs/#{entry['hash']}")
-      # TODO: Figure out what to do when path changes
-      File.write(entry['path'], blob)
-      index[entry['path']] ||= {}
-      index[entry['path']]['hash'] = entry['hash']
-      branch_content['commit_pointer'] = parent_commit_hash
-    end
-    File.write('.stolen-git/index.json', JSON.pretty_generate(index))
+    revert_to_commit(parent_commit_hash)
+    branch_content['commit_pointer'] = parent_commit_hash
     File.write(".stolen-git/branches/#{branch_id}.json", JSON.pretty_generate(branch_content))
   end
 
@@ -265,19 +255,23 @@ module Actions
     elsif options[:commit]
       commit_history = read_json('.stolen-git/commits.json')
       current_commit_hash = commit_history['commits'].find { |x| x['id'] == inp }['hash']
-      commit_content = read_json(".stolen-git/commits/#{current_commit_hash}.json")
-      commit_tree = read_json(".stolen-git/storage/trees/#{commit_content['tree_hash']}.json")
-      index = {}
-      commit_tree['entries'].each do |entry|
-        blob = File.read(".stolen-git/storage/blobs/#{entry['hash']}")
-        # TODO: Figure out what to do when path changes
-        File.write(entry['path'], blob)
-        index[entry['path']] ||= {}
-        index[entry['path']]['hash'] = entry['hash']
-      end
-      File.write('.stolen-git/index.json', JSON.pretty_generate(index))
+      revert_to_commit(current_commit_hash)
     else
-      puts ''
+      # TODO: Handle if user enters branch_id instead
+      branch_content = {}
+      Dir.entries('.stolen-git/branches').each do |entry|
+        branch_content = read_json(entry)
+        break if branch_content['name'] == inp
+      end
+      if branch_content.empty?
+        puts 'There is no branch with that name.'
+        nil
+      end
+      commit_hash = branch_content['commit_pointer']
+      revert_to_commit(commit_hash)
+      pointer = read_json('.stolen-git/pointer.json')
+      pointer['current_branch'] = branch_content['id']
+
     end
   end
 

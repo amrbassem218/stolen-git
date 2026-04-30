@@ -43,6 +43,21 @@ module Utils
     end
     nil
   end
+
+  def revert_to_commit(commit_hash)
+    commit_content = read_json(".stolen-git/commits/#{commit_hash}.json")
+    commit_tree = read_json(".stolen-git/storage/trees/#{commit_content['tree_hash']}.json")
+    index = {}
+    commit_tree['entries'].each do |entry|
+      blob = File.read(".stolen-git/storage/blobs/#{entry['hash']}")
+      # TODO: Figure out what to do when path changes
+      File.write(entry['path'], blob)
+      index[entry['path']] ||= {}
+      index[entry['path']]['hash'] = entry['hash']
+    end
+
+    File.write('.stolen-git/index.json', JSON.pretty_generate(index))
+  end
 end
 
 include Utils

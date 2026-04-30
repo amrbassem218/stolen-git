@@ -25,6 +25,8 @@ when 'reset'
   reset
 when 'log'
   log
+when 'checkout'
+  checkout
 when 'help'
   puts print_usage
   exit 1

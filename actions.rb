@@ -243,12 +243,42 @@ module Actions
       index[entry['path']] ||= {}
       index[entry['path']]['hash'] = entry['hash']
       branch_content['commit_pointer'] = parent_commit_hash
-
-      puts "entry_path: #{entry['path']}"
-      puts "blob: #{blob}"
     end
     File.write('.stolen-git/index.json', JSON.pretty_generate(index))
     File.write(".stolen-git/branches/#{branch_id}.json", JSON.pretty_generate(branch_content))
+  end
+
+  def checkout
+    options = { commit: false }
+
+    # Getting commit name & description
+    OptionParser.new do |opts|
+      opts.banner = 'Usage: stolen-git checkout [options]'
+
+      opts.on('-c', '--commit', 'Add a commit id instead') do
+        options[:commit] = true
+      end
+    end.parse!
+    inp = ARGV.last
+    if !inp
+      puts 'Please Enter the name of a branch or commit_id'
+    elsif options[:commit]
+      commit_history = read_json('.stolen-git/commits.json')
+      current_commit_hash = commit_history['commits'].find { |x| x['id'] == inp }['hash']
+      commit_content = read_json(".stolen-git/commits/#{current_commit_hash}.json")
+      commit_tree = read_json(".stolen-git/storage/trees/#{commit_content['tree_hash']}.json")
+      index = {}
+      commit_tree['entries'].each do |entry|
+        blob = File.read(".stolen-git/storage/blobs/#{entry['hash']}")
+        # TODO: Figure out what to do when path changes
+        File.write(entry['path'], blob)
+        index[entry['path']] ||= {}
+        index[entry['path']]['hash'] = entry['hash']
+      end
+      File.write('.stolen-git/index.json', JSON.pretty_generate(index))
+    else
+      puts ''
+    end
   end
 
   def diff

@@ -221,18 +221,22 @@ module Actions
     branch_id = pointer['point_to']
     branch_content = read_json(".stolen-git/branches/#{branch_id}.json")
     current_commit_hash = branch_content['commit_pointer']
-    parent_commit_hash = if !commit_id || commit_id.empty?
-                           read_json(".stolen-git/commits/#{current_commit_hash}.json")['parent_commit']
-                         else
-                           commit_history['commits'].find { |x| x['id'] == commit_id }['hash']
-                         end
 
-    if parent_commit_hash.empty?
-      puts "The current commit is the earliest in the project. Can't reset behind that."
+    new_commit = if !commit_id || commit_id.empty?
+                   current_commit_hash
+                 else
+                   commit_history['commits'].find do |x|
+                     x['id'] == commit_id
+                   end['hash']
+                 end
+
+    if new_commit.empty?
+      puts "This commit doesn't exit"
       return
     end
-    revert_to_commit(parent_commit_hash)
-    branch_content['commit_pointer'] = parent_commit_hash
+
+    revert_to_commit(new_commit)
+    branch_content['commit_pointer'] = new_commit
     File.write(".stolen-git/branches/#{branch_id}.json", JSON.pretty_generate(branch_content))
   end
 

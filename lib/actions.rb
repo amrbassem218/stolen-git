@@ -55,13 +55,15 @@ module Actions
 
   def stage
     inp = ARGV
+
     if inp.empty?
       puts 'Usage: stg stage <directory/> <file.xy>'
       return
     end
 
     index = JSON.parse(File.read('.stolen-git/index.json'))
-    inp.each do |file_path|
+
+    stage_file = lambda do |file_path|
       file_hash = get_file_hash(file_path)
       file_content = File.read(file_path)
 
@@ -74,6 +76,32 @@ module Actions
       default_index_obj = {}
       index[file_path] ||= default_index_obj
       index[file_path]['hash'] = file_hash
+    end
+
+    stage_directory = lambda do |dir_path|
+      Dir.children(dir_path).each do |entry|
+        path = File.join(dir_path, entry)
+        if File.file?(path)
+          stage_file.call(path)
+        else
+          stage_directory.call(path)
+        end
+      end
+    end
+
+    inp.each do |inp_path|
+      unless File.exist? inp_path
+        puts "#{inp_path} doesn't exist"
+        next
+      end
+
+      if File.file?(inp_path)
+        stage_file.call(inp_path)
+      elsif File.directory? inp_path
+        stage_directory.call(inp_path)
+      else
+        puts "Error logging #{inp_path}. It's neither a file or a directory"
+      end
     end
     index = index.sort.to_h
     File.write('.stolen-git/index.json', JSON.pretty_generate(index))

@@ -12,15 +12,17 @@ Stolen git is well... you get it. I'm building a mini git clone to learn version
 
 ## Usage
 
-| Command  | description                                                       | Flags                                                                                              |
-| -------- | ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| init     | Initialize the project                                            | N/A                                                                                                |
-| stage    | add a file or directory to be tracked                             | N/A                                                                                                |
-| commit   | Save the current tracked state                                    | `-n [--name]` <br> `-d [--description]`                                                            |
-| diff     | get the difference between working directory and the last commit  | N/A                                                                                                |
-| log      | print out commit history (limit print by a number `log <number>`) | N/A                                                                                                |
-| checkout | check a commit or a branch without loss in data                   | `-c [--commit] <commit_id>` to check out a commit instaed of a branch wihout changing HEAD pointer |
-| branch   | List all branches. (or creating a branch by `branch <name>`)      | N/A                                                                                                |
+| Command | description                                                       | Flags                                   |
+| ------- | ----------------------------------------------------------------- | --------------------------------------- |
+| init    | Initialize the project                                            | N/A                                     |
+| stage   | add a file or directory to be tracked                             | N/A                                     |
+| commit  | Save the current tracked state                                    | `-n [--name]` <br> `-d [--description]` |
+| diff    | get the difference between working directory and the last commit  | N/A                                     |
+| log     | print out commit history (limit print by a number `log <number>`) | N/A                                     |
+
+| reset | Reset to the last commit | N/A |
+| checkout | check a commit or a branch without loss in data | `-c [--commit] <commit_id>` to check out a commit instaed of a branch wihout changing HEAD pointer |
+| branch | List all branches. (or creating a branch by `branch <name>`) | N/A |
 
 ## Installation
 
@@ -41,5 +43,52 @@ Stolen git is well... you get it. I'm building a mini git clone to learn version
 
 Run `stg` to verify your installation
 
+## Examples
+
 > [!NOTE]
 > You have to initialize with `stg init` for any of the other commands to work
+
+- Initialization
+
+  ```
+  stg init
+  ```
+
+- Staging
+
+  ```
+  stg stage src/page.ts
+  ```
+
+- Committing
+
+  ```
+  stg commit -n "Adding main page"
+  ```
+
+- Logging all commits
+
+  ```
+  stg log
+  ```
+
+  Logging last 5 commits
+
+  ```
+  stg log 5
+  ```
+
+- Help
+
+  ```
+  stg
+  or
+  stg help
+  ```
+
+- Hard reset
+
+```
+
+stg
+```

@@ -54,14 +54,14 @@ module Actions
   end
 
   def stage
-    files = ARGV
-    if files.empty?
-      puts 'Usage: stolen-git stage <files..>'
+    inp = ARGV
+    if inp.empty?
+      puts 'Usage: stg stage <directory/> <file.xy>'
       return
     end
 
     index = JSON.parse(File.read('.stolen-git/index.json'))
-    files.each do |file_path|
+    inp.each do |file_path|
       file_hash = get_file_hash(file_path)
       file_content = File.read(file_path)
 
@@ -84,7 +84,7 @@ module Actions
 
     # Getting commit name & description
     OptionParser.new do |opts|
-      opts.banner = 'Usage: stolen-git commit [options]'
+      opts.banner = 'Usage: stg commit [options]'
 
       opts.on('-n', '--name NAME', 'Add a commit name') do |name|
         options[:name] = name
@@ -245,7 +245,7 @@ module Actions
 
     # Getting commit name & description
     OptionParser.new do |opts|
-      opts.banner = 'Usage: stolen-git checkout [options]'
+      opts.banner = 'Usage: stg checkout [options]'
 
       opts.on('-c', '--commit', 'Add a commit id instead') do
         options[:commit] = true

@@ -42,3 +42,5 @@ module Stg
     end
   end
 end
+
+Stg::CLI.start

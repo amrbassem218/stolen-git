@@ -58,6 +58,13 @@ module Utils
 
     File.write('.stolen-git/index.json', JSON.pretty_generate(index))
   end
+
+  def check_program_exists
+    return true if File.exist? '.stolen-git'
+
+    puts "There is no instance of stolen-git found. Please run 'stg init' first."
+    false
+  end
 end
 
 include Utils

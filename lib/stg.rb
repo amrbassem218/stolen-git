@@ -8,9 +8,14 @@ module Stg
 
     def self.start
       command = ARGV.shift
-      case command
-      when 'init'
+      if command == 'init'
         p_initialize
+        return
+      else
+        return unless check_program_exists
+      end
+
+      case command
       when 'commit'
         commit
       when 'diff'

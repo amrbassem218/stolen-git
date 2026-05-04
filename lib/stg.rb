@@ -1,5 +1,7 @@
+require 'optparse'
 require_relative 'help'
 require_relative 'actions'
+require_relative 'stg/version'
 
 module Stg
   class CLI
@@ -7,6 +9,20 @@ module Stg
     extend Help
 
     def self.start
+      OptionParser.new do |opts|
+        opts.banner = 'Usage: stg <command> [options]'
+
+        opts.on('-v', '--version', 'Show version') do
+          puts "stg version #{VERSION}"
+          exit
+        end
+
+        opts.on('-h', '--help', 'Show this help') do
+          puts print_usage
+          exit
+        end
+      end.parse!
+
       command = ARGV.shift
       if command == 'init'
         p_initialize

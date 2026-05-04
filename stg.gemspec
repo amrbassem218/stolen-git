@@ -1,6 +1,6 @@
 Gem::Specification.new do |spec|
   spec.name          = 'stg'
-  spec.version       = '0.1.3'
+  spec.version       = File.read(File.expand_path('lib/stg/version.rb', __dir__)).match(/VERSION\s*=\s*['"]([^'"]+)['"]/)[1]
   spec.authors       = ['Amr ElTaweel']
   spec.email         = ['amrbeducation@gmail.com']
 

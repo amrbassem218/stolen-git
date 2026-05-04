@@ -9,6 +9,22 @@ module Actions
   include DiffCalc
 
   def p_initialize
+    begin
+      OptionParser.new do |opts|
+        opts.banner = 'Usage: stg init'
+
+        opts.on_tail('-h', '--help', 'Show this help') do
+          puts opts
+          exit
+        end
+      end.parse!
+    rescue OptionParser::ParseError => e
+      puts e.message
+      puts "Usage: stg init"
+      puts "  -h, --help    Show this help"
+      exit 1
+    end
+
     # Check if already initialized
     if File.exist?('.stolen-git')
       if confirm?('An instance of stolen-git is already up here do you want to replace it')
@@ -54,10 +70,26 @@ module Actions
   end
 
   def stage
+    begin
+      OptionParser.new do |opts|
+        opts.banner = 'Usage: stg stage <file> [files...]'
+
+        opts.on_tail('-h', '--help', 'Show this help') do
+          puts opts
+          exit
+        end
+      end.parse!
+    rescue OptionParser::ParseError => e
+      puts e.message
+      puts "Usage: stg stage <file> [files...]"
+      puts "  -h, --help    Show this help"
+      exit 1
+    end
+
     inp = ARGV
 
     if inp.empty?
-      puts 'Usage: stg stage <directory/> <file.xy>'
+      puts 'Usage: stg stage <file> [files...]'
       return
     end
 
@@ -111,17 +143,31 @@ module Actions
     options = { name: '', description: '' }
 
     # Getting commit name & description
-    OptionParser.new do |opts|
-      opts.banner = 'Usage: stg commit [options]'
+    begin
+      OptionParser.new do |opts|
+        opts.banner = 'Usage: stg commit [options]'
 
-      opts.on('-n', '--name NAME', 'Add a commit name') do |name|
-        options[:name] = name
-      end
+        opts.on('-n', '--name NAME', 'Add a commit name') do |name|
+          options[:name] = name
+        end
 
-      opts.on('-d', '--description DESCRIPTION', 'Add a commit description') do |description|
-        options[:description] = description
-      end
-    end.parse!
+        opts.on('-d', '--description DESCRIPTION', 'Add a commit description') do |description|
+          options[:description] = description
+        end
+
+        opts.on_tail('-h', '--help', 'Show this help') do
+          puts opts
+          exit
+        end
+      end.parse!
+    rescue OptionParser::ParseError => e
+      puts e.message
+      puts "Usage: stg commit [options]"
+      puts "  -n, --name NAME                Add a commit name"
+      puts "  -d, --description DESCRIPTION  Add a commit description"
+      puts "  -h, --help                     Show this help"
+      exit 1
+    end
 
     options[:name] = ask('Add a commit name: ') if options[:name].empty?
 
@@ -243,6 +289,22 @@ module Actions
   end
 
   def reset
+    begin
+      OptionParser.new do |opts|
+        opts.banner = 'Usage: stg reset [commit_id]'
+
+        opts.on_tail('-h', '--help', 'Show this help') do
+          puts opts
+          exit
+        end
+      end.parse!
+    rescue OptionParser::ParseError => e
+      puts e.message
+      puts "Usage: stg reset [commit_id]"
+      puts "  -h, --help    Show this help"
+      exit 1
+    end
+
     commit_id = ARGV.first
     commit_history = read_json('.stolen-git/commits.json')
     pointer = read_json('.stolen-git/pointer.json')
@@ -272,13 +334,26 @@ module Actions
     options = { commit: false }
 
     # Getting commit name & description
-    OptionParser.new do |opts|
-      opts.banner = 'Usage: stg checkout [options]'
+    begin
+      OptionParser.new do |opts|
+        opts.banner = 'Usage: stg checkout [options]'
 
-      opts.on('-c', '--commit', 'Add a commit id instead') do
-        options[:commit] = true
-      end
-    end.parse!
+        opts.on('-c', '--commit', 'Add a commit id instead') do
+          options[:commit] = true
+        end
+
+        opts.on_tail('-h', '--help', 'Show this help') do
+          puts opts
+          exit
+        end
+      end.parse!
+    rescue OptionParser::ParseError => e
+      puts e.message
+      puts "Usage: stg checkout [options]"
+      puts "  -c, --commit    Add a commit id instead"
+      puts "  -h, --help      Show this help"
+      exit 1
+    end
     inp = ARGV.last
     if !inp
       puts 'Please Enter the name of a branch or commit_id'
@@ -311,6 +386,22 @@ module Actions
   end
 
   def branch
+    begin
+      OptionParser.new do |opts|
+        opts.banner = 'Usage: stg branch [name]'
+
+        opts.on_tail('-h', '--help', 'Show this help') do
+          puts opts
+          exit
+        end
+      end.parse!
+    rescue OptionParser::ParseError => e
+      puts e.message
+      puts "Usage: stg branch [name]"
+      puts "  -h, --help    Show this help"
+      exit 1
+    end
+
     name = ARGV.last
     pointer = read_json('.stolen-git/pointer.json')
     pointed_branch = pointer['type'] == 'branch' ? pointer['point_to'] : ''
@@ -338,6 +429,22 @@ module Actions
   end
 
   def diff
+    begin
+      OptionParser.new do |opts|
+        opts.banner = 'Usage: stg diff'
+
+        opts.on_tail('-h', '--help', 'Show this help') do
+          puts opts
+          exit
+        end
+      end.parse!
+    rescue OptionParser::ParseError => e
+      puts e.message
+      puts "Usage: stg diff"
+      puts "  -h, --help    Show this help"
+      exit 1
+    end
+
     index = read_json('.stolen-git/index.json')
     index.each do |key, value|
       new_file_content = File.exist?(key) ? File.read(key) : nil
@@ -357,6 +464,22 @@ module Actions
   end
 
   def log
+    begin
+      OptionParser.new do |opts|
+        opts.banner = 'Usage: stg log [limit]'
+
+        opts.on_tail('-h', '--help', 'Show this help') do
+          puts opts
+          exit
+        end
+      end.parse!
+    rescue OptionParser::ParseError => e
+      puts e.message
+      puts "Usage: stg log [limit]"
+      puts "  -h, --help    Show this help"
+      exit 1
+    end
+
     limit = ARGV.last
     limit = limit && !limit.empty? ? limit.to_i : 0
     commit_history_content = read_json('.stolen-git/commits.json')

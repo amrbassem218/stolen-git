@@ -211,18 +211,18 @@ module Actions
       else
         parent_map = entries.to_h { |e| [e['path'], e['hash']] }
 
-        puts "parent_map: #{parent_map}"
-        puts "index: #{index}"
-
+        # puts "parent_map: #{parent_map}"
+        # puts "index: #{index}"
+        #
         index.each do |key, value|
           key = clean_path(key)
           new_hash = value['hash']
           old_hash = parent_map[key]
-
-          puts "key: #{key}"
-          puts "old_hash: #{old_hash}"
-          puts "new_hash: #{new_hash}"
-          puts
+          #
+          # puts "key: #{key}"
+          # puts "old_hash: #{old_hash}"
+          # puts "new_hash: #{new_hash}"
+          # puts
 
           if old_hash
             next if old_hash == new_hash

@@ -508,9 +508,6 @@ module Actions
         q = ask(':')
         break if q == 'q'
       end
-      # puts "last_commit: #{last_commit}"
-      # puts "i: #{i}"
-      # puts "limit: #{limit}"
     end
   end
 end

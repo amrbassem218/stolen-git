@@ -68,9 +68,8 @@ module DiffCalc
 
     while i1 < @old_s.length || i2 < @new_s.length
       entry = @mem[[i1, i2]]
-      unless entry
-        break
-      end
+      break unless entry
+
       action = entry[:action]
 
       case action
@@ -89,7 +88,7 @@ module DiffCalc
       end
     end
 
-    result = @mem[[0, 0]]
+    result = @mem[[0, 0]] || { insertions: 0, deletions: 0, diff_cnt: 0 }
     {
       insertion_seq: insertion_seq,
       deletion_seq: deletion_seq,

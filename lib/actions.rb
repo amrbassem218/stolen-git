@@ -96,6 +96,7 @@ module Actions
     index = JSON.parse(File.read('.stolen-git/index.json'))
 
     stage_file = lambda do |file_path|
+      file_path = clean_path(file_path)
       file_hash = get_file_hash(file_path)
       file_content = File.read(file_path)
 
@@ -111,6 +112,7 @@ module Actions
     end
 
     stage_directory = lambda do |dir_path|
+      dir_path = clean_path(dir_path)
       Dir.children(dir_path).each do |entry|
         next if entry == '.stolen-git'
 
@@ -124,6 +126,7 @@ module Actions
     end
 
     inp.each do |inp_path|
+      inp_path = clean_path(inp_path)
       unless File.exist? inp_path
         puts "#{inp_path} doesn't exist"
         next
@@ -187,17 +190,18 @@ module Actions
     parent_commit = branch_content['commit_pointer']
 
     # Getting differences to last commit
-
     no_insertions = 0
     no_deletions = 0
     no_file_changed = 0
+
     commit_diff = {}
 
     getting_diff = lambda do |entries|
       if entries.nil?
         index.each do |key, value|
+          key = clean_path(key)
           new_entry_content = File.read(".stolen-git/storage/blobs/#{value['hash']}").lines.to_a
-          compute_diff('', new_entry_content)
+          compute_diff([], new_entry_content)
           diff = build_sequences
           no_insertions += diff[:insertions]
           no_deletions += diff[:deletions]
@@ -207,9 +211,18 @@ module Actions
       else
         parent_map = entries.to_h { |e| [e['path'], e['hash']] }
 
+        puts "parent_map: #{parent_map}"
+        puts "index: #{index}"
+
         index.each do |key, value|
+          key = clean_path(key)
           new_hash = value['hash']
           old_hash = parent_map[key]
+
+          puts "key: #{key}"
+          puts "old_hash: #{old_hash}"
+          puts "new_hash: #{new_hash}"
+          puts
 
           if old_hash
             next if old_hash == new_hash
@@ -219,7 +232,7 @@ module Actions
             compute_diff(entry_content, new_entry_content)
           else
             new_entry_content = File.read(".stolen-git/storage/blobs/#{new_hash}").lines.to_a
-            compute_diff('', new_entry_content)
+            compute_diff([], new_entry_content)
           end
 
           diff = build_sequences
@@ -230,6 +243,7 @@ module Actions
         end
 
         parent_map.each do |key, old_hash|
+          key = clean_path(key)
           next if index.key?(key)
 
           entry_content = File.read(".stolen-git/storage/blobs/#{old_hash}").lines.to_a
@@ -260,6 +274,7 @@ module Actions
 
     # Making the tree
     index.each do |key, value|
+      key = clean_path(key)
       tree_content[:entries].push({
                                     path: key,
                                     type: 'blob',
@@ -472,6 +487,7 @@ module Actions
 
     index = read_json('.stolen-git/index.json')
     index.each do |key, value|
+      key = clean_path(key)
       new_file_content = File.exist?(key) ? File.read(key) : nil
       file_name = File.basename(key)
       if new_file_content.nil?

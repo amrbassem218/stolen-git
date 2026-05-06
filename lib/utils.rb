@@ -1,6 +1,7 @@
 require 'fileutils'
 require 'optparse'
 require 'digest'
+require 'pathname'
 module Utils
   def confirm?(prompt)
     loop do
@@ -57,6 +58,10 @@ module Utils
     end
 
     File.write('.stolen-git/index.json', JSON.pretty_generate(index))
+  end
+
+  def clean_path(path)
+    Pathname.new(path).cleanpath.to_s
   end
 
   def check_program_exists

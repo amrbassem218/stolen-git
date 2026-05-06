@@ -481,17 +481,16 @@ module Actions
     end
 
     limit = ARGV.last
-    limit = limit && !limit.empty? ? limit.to_i : 0
-    commit_history_content = read_json('.stolen-git/commits.json')
+    is_limited = limit && !limit.empty?
+    limit = is_limited ? limit.to_i : 0
+    pointer = read_json('.stolen-git/pointer.json')
+    last_commit = pointer['type'] == 'commit' ? pointer['point_to'] : read_json(".stolen-git/branches/#{pointer['point_to']}.json")['commit_pointer']
+    unless last_commit
+      puts "Couldn't find last commits. The setup might have been corrupted. If that's the case run 'stg init'"
+    end
+    i = 0
 
-    commit_history_content['commits'].each_with_index do |commit, i|
-      break if limit > 0 && i >= limit
-
-      if limit == 0 && i >= 5
-        q = ask(':')
-        break if q == 'q'
-      end
-      commit_content = read_json(".stolen-git/commits/#{commit['hash']}.json")
+    print_commit = lambda do |commit_content|
       puts
       puts "commit #{commit_content['id']}".green
       puts "Author #{commit_content['author_profile']['username']} <#{commit_content['author_profile']['email']}>"
@@ -499,6 +498,19 @@ module Actions
       puts
       puts "    #{commit_content['name']}"
       puts
+    end
+    while (is_limited && i < limit || !is_limited) && last_commit && last_commit.length.positive?
+      last_commit_content =  read_json(".stolen-git/commits/#{last_commit}.json")
+      print_commit.call(last_commit_content)
+      last_commit = last_commit_content['parent_commit']
+      i += 1
+      if !is_limited && i >= 5
+        q = ask(':')
+        break if q == 'q'
+      end
+      # puts "last_commit: #{last_commit}"
+      # puts "i: #{i}"
+      # puts "limit: #{limit}"
     end
   end
 end

@@ -402,19 +402,21 @@ module Actions
       exit 1
     end
 
-    name = ARGV.last
+    names = ARGV
     pointer = read_json('.stolen-git/pointer.json')
     pointed_branch = pointer['type'] == 'branch' ? pointer['point_to'] : ''
-    if name
-      first_commit = pointer['type'] == 'branch' ? read_json(".stolen-git/branches/#{pointed_branch}.json")['commit_pointer'] : pointer['point_to']
-      id = SecureRandom.uuid
-      File.write(".stolen-git/branches/#{id}.json", JSON.pretty_generate({
-                                                                           name: name,
-                                                                           created_at: Time.now,
-                                                                           commit_pointer: first_commit
-                                                                         }))
+    if names && names.length.positive?
+      names.each do |name|
+        first_commit = pointer['type'] == 'branch' ? read_json(".stolen-git/branches/#{pointed_branch}.json")['commit_pointer'] : pointer['point_to']
+        id = SecureRandom.uuid
+        File.write(".stolen-git/branches/#{id}.json", JSON.pretty_generate({
+                                                                             name: name,
+                                                                             created_at: Time.now,
+                                                                             commit_pointer: first_commit
+                                                                           }))
+        puts "branch #{name} created"
+      end
       return
-      puts "branch #{name} created"
     end
     Dir.children('.stolen-git/branches').each do |entry|
       branch_content = read_json(".stolen-git/branches/#{entry}")

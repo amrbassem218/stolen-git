@@ -490,6 +490,8 @@ module Actions
     rescue OptionParser::ParseError => e
       puts e.message
       puts 'Usage: stg log [limit]'
+      puts '  -[num], --limit   limit showed logs i.e. stg log -5'
+      puts '  -l, --limit   limit showed logs'
       puts '  -h, --help    Show this help'
       exit 1
     end

@@ -8,10 +8,10 @@ module Help
       stage: 'add a file or directory to be tracked ',
       commit: 'Save the current tracked state ',
       diff: 'get the difference between working directory and the last commit ',
-      log: 'print out commit history (limit print by a number `log <number>`) ',
+      log: 'print out commit history (limit print by a number ) ',
       reset: 'Revert to commit',
       checkout: 'check a commit or a branch without loss in data',
-      branch: 'List all branches. (or creating a branch by `branch <name>`) '
+      branch: 'List all branches. (or creating a branch by ) '
 
     }
     max_len = 0

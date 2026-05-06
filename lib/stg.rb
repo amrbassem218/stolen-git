@@ -9,22 +9,29 @@ module Stg
     extend Help
 
     def self.start
-      OptionParser.new do |opts|
-        opts.banner = 'Usage: stg <command> [options]'
+      begin
+        OptionParser.new do |opts|
+          opts.banner = 'Usage: stg <command> [options]'
 
-        opts.on('-v', '--version', 'Show version') do
-          puts "stg version #{VERSION}"
-          exit
-        end
+          opts.on('-v', '--version', 'Show version') do
+            puts "stg version #{VERSION}"
+            exit
+          end
 
-        opts.on('-h', '--help', 'Show this help') do
-          puts print_usage
-          exit
-        end
-      end.parse!
+          opts.on('-h', '--help', 'Show this help') do
+            puts print_usage
+            exit
+          end
+        end.order!
+      rescue OptionParser::ParseError
+        # Ignore unknown options, let command handlers deal with them
+      end
 
       command = ARGV.shift
-      if command == 'init'
+      if !command || command.empty?
+        puts print_usage
+        return
+      elsif command == 'init'
         p_initialize
         return
       else
@@ -64,4 +71,4 @@ module Stg
   end
 end
 
-Stg::CLI.start
+Stg::CLI.start if __FILE__ == $PROGRAM_NAME

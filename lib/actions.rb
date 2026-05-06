@@ -20,8 +20,8 @@ module Actions
       end.parse!
     rescue OptionParser::ParseError => e
       puts e.message
-      puts "Usage: stg init"
-      puts "  -h, --help    Show this help"
+      puts 'Usage: stg init'
+      puts '  -h, --help    Show this help'
       exit 1
     end
 
@@ -81,8 +81,8 @@ module Actions
       end.parse!
     rescue OptionParser::ParseError => e
       puts e.message
-      puts "Usage: stg stage <file> [files...]"
-      puts "  -h, --help    Show this help"
+      puts 'Usage: stg stage <file> [files...]'
+      puts '  -h, --help    Show this help'
       exit 1
     end
 
@@ -162,10 +162,10 @@ module Actions
       end.parse!
     rescue OptionParser::ParseError => e
       puts e.message
-      puts "Usage: stg commit [options]"
-      puts "  -n, --name NAME                Add a commit name"
-      puts "  -d, --description DESCRIPTION  Add a commit description"
-      puts "  -h, --help                     Show this help"
+      puts 'Usage: stg commit [options]'
+      puts '  -n, --name NAME                Add a commit name'
+      puts '  -d, --description DESCRIPTION  Add a commit description'
+      puts '  -h, --help                     Show this help'
       exit 1
     end
 
@@ -300,8 +300,8 @@ module Actions
       end.parse!
     rescue OptionParser::ParseError => e
       puts e.message
-      puts "Usage: stg reset [commit_id]"
-      puts "  -h, --help    Show this help"
+      puts 'Usage: stg reset [commit_id]'
+      puts '  -h, --help    Show this help'
       exit 1
     end
 
@@ -349,9 +349,9 @@ module Actions
       end.parse!
     rescue OptionParser::ParseError => e
       puts e.message
-      puts "Usage: stg checkout [options]"
-      puts "  -c, --commit    Add a commit id instead"
-      puts "  -h, --help      Show this help"
+      puts 'Usage: stg checkout [options]'
+      puts '  -c, --commit    Add a commit id instead'
+      puts '  -h, --help      Show this help'
       exit 1
     end
     inp = ARGV.last
@@ -397,8 +397,8 @@ module Actions
       end.parse!
     rescue OptionParser::ParseError => e
       puts e.message
-      puts "Usage: stg branch [name]"
-      puts "  -h, --help    Show this help"
+      puts 'Usage: stg branch [name]'
+      puts '  -h, --help    Show this help'
       exit 1
     end
 
@@ -440,8 +440,8 @@ module Actions
       end.parse!
     rescue OptionParser::ParseError => e
       puts e.message
-      puts "Usage: stg diff"
-      puts "  -h, --help    Show this help"
+      puts 'Usage: stg diff'
+      puts '  -h, --help    Show this help'
       exit 1
     end
 
@@ -475,8 +475,8 @@ module Actions
       end.parse!
     rescue OptionParser::ParseError => e
       puts e.message
-      puts "Usage: stg log [limit]"
-      puts "  -h, --help    Show this help"
+      puts 'Usage: stg log [limit]'
+      puts '  -h, --help    Show this help'
       exit 1
     end
 

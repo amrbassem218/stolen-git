@@ -112,6 +112,8 @@ module Actions
 
     stage_directory = lambda do |dir_path|
       Dir.children(dir_path).each do |entry|
+        next if entry == '.stolen-git'
+
         path = File.join(dir_path, entry)
         if File.file?(path)
           stage_file.call(path)
@@ -192,28 +194,47 @@ module Actions
     commit_diff = {}
 
     getting_diff = lambda do |entries|
-      parent_index = 0
-
-      index.each do |key, value|
-        if entries && entries[parent_index] && key == entries[parent_index]['path']
-          new_hash = value['hash']
-          old_hash = entries[parent_index]['hash']
-          parent_index += 1
-          next if value['hash'] == new_hash
-
-          entry_content = File.read(".stolen-git/storage/blobs/#{old_hash}").lines.to_a
-          new_entry_content = File.read(".stolen-git/storage/blobs/#{new_hash}").lines.to_a
-          compute_diff(entry_content, new_entry_content)
+      if entries.nil?
+        index.each do |key, value|
+          new_entry_content = File.read(".stolen-git/storage/blobs/#{value['hash']}").lines.to_a
+          compute_diff('', new_entry_content)
           diff = build_sequences
           no_insertions += diff[:insertions]
           no_deletions += diff[:deletions]
           no_file_changed += 1
           commit_diff[key] = diff
-        else
-          new_entry_content = File.read(".stolen-git/storage/blobs/#{value['hash']}").lines.to_a
-          compute_diff('', new_entry_content)
-          diff = build_sequences
+        end
+      else
+        parent_map = entries.to_h { |e| [e['path'], e['hash']] }
 
+        index.each do |key, value|
+          new_hash = value['hash']
+          old_hash = parent_map[key]
+
+          if old_hash
+            next if old_hash == new_hash
+
+            entry_content = File.read(".stolen-git/storage/blobs/#{old_hash}").lines.to_a
+            new_entry_content = File.read(".stolen-git/storage/blobs/#{new_hash}").lines.to_a
+            compute_diff(entry_content, new_entry_content)
+          else
+            new_entry_content = File.read(".stolen-git/storage/blobs/#{new_hash}").lines.to_a
+            compute_diff('', new_entry_content)
+          end
+
+          diff = build_sequences
+          no_insertions += diff[:insertions]
+          no_deletions += diff[:deletions]
+          no_file_changed += 1
+          commit_diff[key] = diff
+        end
+
+        parent_map.each do |key, old_hash|
+          next if index.key?(key)
+
+          entry_content = File.read(".stolen-git/storage/blobs/#{old_hash}").lines.to_a
+          compute_diff(entry_content, [])
+          diff = build_sequences
           no_insertions += diff[:insertions]
           no_deletions += diff[:deletions]
           no_file_changed += 1
@@ -500,7 +521,7 @@ module Actions
       exit 1
     end
 
-    is_limited = options[:limit]
+    is_limited = options[:limit] > 0
     pointer = read_json('.stolen-git/pointer.json')
     last_commit = pointer['type'] == 'commit' ? pointer['point_to'] : read_json(".stolen-git/branches/#{pointer['point_to']}.json")['commit_pointer']
     unless last_commit

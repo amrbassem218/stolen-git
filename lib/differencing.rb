@@ -27,14 +27,12 @@ module DiffCalc
     if i1 >= @old_s.length
       result = { diff_cnt: @new_s.length - i2, insertions: @new_s.length - i2, deletions: 0, action: :insert }
       @mem[[i1, i2]] = result
-      differencing(i1, i2 + 1) if i2 < @new_s.length
       return result
     end
 
     if i2 >= @new_s.length
       result = { diff_cnt: @old_s.length - i1, insertions: 0, deletions: @old_s.length - i1, action: :delete }
       @mem[[i1, i2]] = result
-      differencing(i1 + 1, i2) if i1 < @old_s.length
       return result
     end
 
@@ -69,7 +67,11 @@ module DiffCalc
     deletion_seq = {}
 
     while i1 < @old_s.length || i2 < @new_s.length
-      action = @mem[[i1, i2]][:action]
+      entry = @mem[[i1, i2]]
+      unless entry
+        break
+      end
+      action = entry[:action]
 
       case action
       when :done

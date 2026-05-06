@@ -354,6 +354,7 @@ module Actions
       puts '  -h, --help      Show this help'
       exit 1
     end
+
     inp = ARGV.last
     if !inp
       puts 'Please Enter the name of a branch or commit_id'
@@ -362,7 +363,7 @@ module Actions
       current_commit_hash = commit_history['commits'].find { |x| x['id'] == inp }['hash']
       revert_to_commit(current_commit_hash)
     else
-      # TODO: Handle if user enters branch_id instead
+      # TODO: Handle if user enters branch_id instead of name
       branch_content = {}
       branch_id = ''
       Dir.children('.stolen-git/branches').each do |entry|
@@ -377,11 +378,12 @@ module Actions
         nil
       end
       commit_hash = branch_content['commit_pointer']
-      revert_to_commit(commit_hash)
+      revert_to_commit(commit_hash) if commit_hash&.length&.positive?
       pointer = read_json('.stolen-git/pointer.json')
       pointer['point_to'] = branch_id
       pointer['type'] = 'branch'
       File.write('.stolen-git/pointer.json', JSON.pretty_generate(pointer))
+
     end
   end
 

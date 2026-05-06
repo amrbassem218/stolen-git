@@ -464,9 +464,23 @@ module Actions
   end
 
   def log
+    # Handle if the user wants to -[num]
+    ARGV.map! do |arg|
+      if arg =~ /^-(\d+)$/
+        ['-l', ::Regexp.last_match(1)]
+      else
+        arg
+      end
+    end.flatten!
+
+    options = { limit: 0 }
     begin
       OptionParser.new do |opts|
         opts.banner = 'Usage: stg log [limit]'
+
+        opts.on('-l', '--limit LIMIT', 'limit showed logs') do |num|
+          options[:limit] = num.to_i
+        end
 
         opts.on_tail('-h', '--help', 'Show this help') do
           puts opts
@@ -480,9 +494,7 @@ module Actions
       exit 1
     end
 
-    limit = ARGV.last
-    is_limited = limit && !limit.empty?
-    limit = is_limited ? limit.to_i : 0
+    is_limited = options[:limit]
     pointer = read_json('.stolen-git/pointer.json')
     last_commit = pointer['type'] == 'commit' ? pointer['point_to'] : read_json(".stolen-git/branches/#{pointer['point_to']}.json")['commit_pointer']
     unless last_commit
@@ -499,7 +511,8 @@ module Actions
       puts "    #{commit_content['name']}"
       puts
     end
-    while (is_limited && i < limit || !is_limited) && last_commit && last_commit.length.positive?
+
+    while (is_limited && i < options[:limit] || !is_limited) && last_commit && last_commit.length.positive?
       last_commit_content =  read_json(".stolen-git/commits/#{last_commit}.json")
       print_commit.call(last_commit_content)
       last_commit = last_commit_content['parent_commit']

@@ -529,19 +529,19 @@ module Actions
     end
     i = 0
 
-    print_commit = lambda do |commit_content|
+    print_commit = lambda do |commit_hash, commit_content|
       puts
       puts "commit #{commit_content['id']}".green
+      puts "hash:  #{commit_hash[0..5]}...#{commit_hash[-5..]}".green
       puts "Author #{commit_content['author_profile']['username']} <#{commit_content['author_profile']['email']}>"
       puts "Date: #{commit_content['created_at']}"
       puts
       puts "    #{commit_content['name']}"
-      puts
     end
 
     while (is_limited && i < options[:limit] || !is_limited) && last_commit && last_commit.length.positive?
       last_commit_content =  read_json(".stolen-git/commits/#{last_commit}.json")
-      print_commit.call(last_commit_content)
+      print_commit.call(last_commit, last_commit_content)
       last_commit = last_commit_content['parent_commit']
       i += 1
       if !is_limited && i >= 5

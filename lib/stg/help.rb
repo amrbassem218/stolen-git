@@ -5,14 +5,14 @@ module Help
   Commands:\n"
     commands_docs = {
       init: 'Initialize the project',
-      stage: 'add a file or directory to be tracked ',
-      commit: 'Save the current tracked state ',
-      diff: 'get the difference between working directory and the last commit ',
-      log: 'print out commit history',
-      reset: 'Revert to commit',
-      checkout: 'check a commit or a branch without loss in data',
-      branch: 'List all branches.',
-      help: 'show this list'
+      stage: 'Add files or directories to the index',
+      commit: 'Save the current indexed state',
+      diff: 'Show differences between the working directory and the last commit',
+      log: 'Print commit history',
+      reset: 'Restore from the index, or restore a commit when an id is provided',
+      checkout: 'Check out a branch, or a commit with -c',
+      branch: 'List branches, or create a branch when a name is provided',
+      help: 'Show this list'
     }
     max_len = 0
     commands_docs.each_key do |command|

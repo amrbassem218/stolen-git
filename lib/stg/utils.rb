@@ -62,6 +62,15 @@ module Utils
     File.write('.stolen-git/index.json', JSON.pretty_generate(index))
   end
 
+  def revert_to_index
+    index = read_json('.stolen-git/index.json') || {}
+
+    index.each do |path, entry|
+      blob = File.read(".stolen-git/storage/blobs/#{entry['hash']}")
+      File.write(path, blob)
+    end
+  end
+
   def clean_path(path)
     Pathname.new(path).cleanpath.to_s
   end

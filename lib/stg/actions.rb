@@ -331,9 +331,14 @@ module Actions
   end
 
   def reset
+    reset_usage = lambda do
+      puts 'Usage: stg reset <commit_id>'
+      puts "You can find commit_id by running 'stg log'"
+    end
+
     begin
       OptionParser.new do |opts|
-        opts.banner = 'Usage: stg reset [commit_id]'
+        opts.banner = 'Usage: stg reset <commit_id>'
 
         opts.on_tail('-h', '--help', 'Show this help') do
           puts opts
@@ -342,9 +347,14 @@ module Actions
       end.parse!
     rescue OptionParser::ParseError => e
       puts e.message
-      puts 'Usage: stg reset [commit_id]'
+      reset_usage.call
       puts '  -h, --help    Show this help'
       exit 1
+    end
+
+    if ARGV.length > 1
+      reset_usage.call
+      return
     end
 
     commit_id = ARGV.first
@@ -352,18 +362,15 @@ module Actions
     pointer = read_json('.stolen-git/pointer.json')
     branch_id = pointer['point_to']
     branch_content = read_json(".stolen-git/branches/#{branch_id}.json")
-    current_commit_hash = branch_content['commit_pointer']
+    if commit_id.nil? || commit_id.empty?
+      revert_to_index
+      return
+    end
 
-    new_commit = if !commit_id || commit_id.empty?
-                   current_commit_hash
-                 else
-                   commit_history['commits'].find do |x|
-                     x['id'] == commit_id
-                   end['hash']
-                 end
-
-    if new_commit.empty?
-      puts "This commit doesn't exit"
+    commit = commit_history['commits'].find { |x| x['id'] == commit_id }
+    new_commit = commit && commit['hash']
+    if new_commit.nil? || new_commit.empty?
+      reset_usage.call
       return
     end
 

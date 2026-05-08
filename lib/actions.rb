@@ -57,6 +57,7 @@ module Actions
 
       # main files
       File.write('.stolen-git/project_info.json', {})
+      File.write('.stg-ignore', JSON.pretty_generate(['.*/']))
       File.write('.stolen-git/commits.json', JSON.pretty_generate({ commits: [] }))
       File.write('.stolen-git/index.json', {})
 
@@ -93,9 +94,12 @@ module Actions
       return
     end
 
-    index = JSON.parse(File.read('.stolen-git/index.json'))
-
+    index = read_json('.stolen-git/index.json')
+    ignore = read_json('.stg-ignore')
     stage_file = lambda do |file_path|
+      ignore&.each do |ignore_pattern|
+        return if File.fnmatch(ignore_pattern, file_path)
+      end
       file_path = clean_path(file_path)
       file_hash = get_file_hash(file_path)
       file_content = File.read(file_path)
@@ -211,18 +215,10 @@ module Actions
       else
         parent_map = entries.to_h { |e| [e['path'], e['hash']] }
 
-        # puts "parent_map: #{parent_map}"
-        # puts "index: #{index}"
-        #
         index.each do |key, value|
           key = clean_path(key)
           new_hash = value['hash']
           old_hash = parent_map[key]
-          #
-          # puts "key: #{key}"
-          # puts "old_hash: #{old_hash}"
-          # puts "new_hash: #{new_hash}"
-          # puts
 
           if old_hash
             next if old_hash == new_hash
@@ -283,6 +279,7 @@ module Actions
                                   })
     end
     tree_content[:entries] = tree_content[:entries].sort { |a, b| a['path'] <=> b['path'] }
+    puts "tree_content: #{tree_content}"
     tree_content = JSON.pretty_generate(tree_content)
     tree_hash = get_string_hash(tree_content)
     File.write(".stolen-git/storage/trees/#{tree_hash}.json", tree_content)

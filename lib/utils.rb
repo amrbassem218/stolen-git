@@ -29,6 +29,8 @@ module Utils
 
   def read_json(path)
     JSON.parse(File.read(path))
+  rescue StandardError
+    nil
   end
 
   def get_file_hash(path)

@@ -66,6 +66,19 @@ module Utils
     Pathname.new(path).cleanpath.to_s
   end
 
+  def ignored_path?(path, ignore_patterns)
+    path = clean_path(path)
+    return false if path == '.'
+
+    path_as_dir = path.end_with?('/') ? path : "#{path}/"
+
+    ignore_patterns&.any? do |pattern|
+      File.fnmatch(pattern, path) ||
+        File.fnmatch(pattern, path_as_dir) ||
+        (pattern.end_with?('/') && File.fnmatch("#{pattern}**", path))
+    end
+  end
+
   def check_program_exists
     return true if File.exist? '.stolen-git'
 

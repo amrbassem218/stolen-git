@@ -83,7 +83,8 @@ module DiffCalc
         deletion_seq[i2].push({ old_index: i1, ma_type: 'bs' })
         i1 += 1
       when :insert
-        insertion_seq[i2] = { value: @new_s[i2], old_index: i1 }
+        insertion_seq[i2] =
+          { value: @new_s[i2].encode('UTF-8', invalid: :replace, undef: :replace, replace: ''), old_index: i1 }
         i2 += 1
       end
     end

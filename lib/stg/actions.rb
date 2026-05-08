@@ -96,11 +96,12 @@ module Actions
 
     index = read_json('.stolen-git/index.json')
     ignore = read_json('.stg-ignore')
+    index.reject! { |key, _value| ignored_path?(key, ignore) }
+
     stage_file = lambda do |file_path|
-      ignore&.each do |ignore_pattern|
-        return if File.fnmatch(ignore_pattern, file_path)
-      end
       file_path = clean_path(file_path)
+      return if ignored_path?(file_path, ignore)
+
       file_hash = get_file_hash(file_path)
       file_content = File.read(file_path)
 
@@ -117,6 +118,8 @@ module Actions
 
     stage_directory = lambda do |dir_path|
       dir_path = clean_path(dir_path)
+      return if ignored_path?(dir_path, ignore)
+
       Dir.children(dir_path).each do |entry|
         next if entry == '.stolen-git'
 
@@ -182,6 +185,11 @@ module Actions
 
     # Get the index
     index = JSON.parse(File.read('.stolen-git/index.json'))
+    ignore = read_json('.stg-ignore')
+    original_index_size = index.length
+    index.reject! { |key, _value| ignored_path?(key, ignore) }
+    File.write('.stolen-git/index.json', JSON.pretty_generate(index)) if index.length != original_index_size
+
     tree_content = {
       entries: []
     }
@@ -213,7 +221,9 @@ module Actions
           commit_diff[key] = diff
         end
       else
-        parent_map = entries.to_h { |e| [e['path'], e['hash']] }
+        parent_map = entries
+                     .reject { |entry| ignored_path?(entry['path'], ignore) }
+                     .to_h { |e| [e['path'], e['hash']] }
 
         index.each do |key, value|
           key = clean_path(key)

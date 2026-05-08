@@ -98,6 +98,21 @@ module Actions
     ignore = read_json('.stg-ignore')
     index.reject! { |key, _value| ignored_path?(key, ignore) }
 
+    path_in_directory = lambda do |path, dir_path|
+      dir_path == '.' || path == dir_path || path.start_with?("#{dir_path}/")
+    end
+
+    stage_deleted = lambda do |path|
+      path = clean_path(path)
+
+      index.keys.each do |indexed_path|
+        next unless indexed_path == path || path_in_directory.call(indexed_path, path)
+        next if File.exist?(indexed_path)
+
+        index.delete(indexed_path)
+      end
+    end
+
     stage_file = lambda do |file_path|
       file_path = clean_path(file_path)
       return if ignored_path?(file_path, ignore)
@@ -120,6 +135,8 @@ module Actions
       dir_path = clean_path(dir_path)
       return if ignored_path?(dir_path, ignore)
 
+      stage_deleted.call(dir_path)
+
       Dir.children(dir_path).each do |entry|
         next if entry == '.stolen-git'
 
@@ -135,7 +152,11 @@ module Actions
     inp.each do |inp_path|
       inp_path = clean_path(inp_path)
       unless File.exist? inp_path
-        puts "#{inp_path} doesn't exist"
+        if index.key?(inp_path) || index.keys.any? { |key| path_in_directory.call(key, inp_path) }
+          stage_deleted.call(inp_path)
+        else
+          puts "#{inp_path} doesn't exist"
+        end
         next
       end
 

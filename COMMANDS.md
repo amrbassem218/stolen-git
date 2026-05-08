@@ -43,6 +43,8 @@ stg stage .
 
 The index is the set of files that `stg commit` will use. Editing a file after staging it does not automatically update the index; run `stg stage <file>` again to stage the newer content.
 
+Staging also records deletions for tracked files. If a tracked file is deleted from disk, run `stg stage .` or `stg stage <deleted_file>` before committing.
+
 ## commit
 
 Commits are created from the index, not directly from every file in the working directory:
@@ -111,6 +113,8 @@ Restores files from the selected commit and moves the current branch pointer to 
 ```sh
 stg log
 ```
+
+When resetting to a commit, tracked files that exist in the target commit are written to disk. Tracked files that exist in the current index but do not exist in the target commit are removed from disk.
 
 If the commit id is invalid, Stolen Git prints:
 

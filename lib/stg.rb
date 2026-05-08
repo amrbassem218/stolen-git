@@ -1,6 +1,6 @@
 require 'optparse'
-require_relative 'help'
-require_relative 'actions'
+require_relative 'stg/help'
+require_relative 'stg/actions'
 require_relative 'stg/version'
 
 module Stg

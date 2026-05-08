@@ -279,7 +279,6 @@ module Actions
                                   })
     end
     tree_content[:entries] = tree_content[:entries].sort { |a, b| a['path'] <=> b['path'] }
-    puts "tree_content: #{tree_content}"
     tree_content = JSON.pretty_generate(tree_content)
     tree_hash = get_string_hash(tree_content)
     File.write(".stolen-git/storage/trees/#{tree_hash}.json", tree_content)

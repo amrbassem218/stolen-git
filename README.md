@@ -10,6 +10,9 @@
 
 Stolen git is well... you get it. I'm building a mini git clone to learn version control and get comfortable with ruby.
 
+> [!NOTE]
+> Stolen-git runs on unix systems (mac, linux) or WSL on windows only. Native windows support is non-existent in the ruby world
+
 ## Usage
 
 Run `stg init` once in a project before using the other commands. Stolen Git stores its data in `.stolen-git/` and tracks files through its own index.

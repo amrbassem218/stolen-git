@@ -96,6 +96,9 @@ Use the commit ids printed by `stg log` with commands such as `stg reset <commit
 
 ## reset
 
+> [!WARNING]
+> `stg reset <commit_id>` is destructive. It moves the current branch back to that commit, so commits that came after it are removed from normal history and there is currently no recovery command for getting back to them. It also rewrites the tracked working files to match the target commit, which can delete tracked files and replace their contents.
+
 Reset has two modes:
 
 ```sh
@@ -115,6 +118,14 @@ stg log
 ```
 
 When resetting to a commit, tracked files that exist in the target commit are written to disk. Tracked files that exist in the current index but do not exist in the target commit are removed from disk.
+
+If you only want to inspect an older commit, prefer checkout:
+
+```sh
+stg checkout -c <commit_id>
+```
+
+Checkout restores the selected commit without moving the current branch pointer, so it is safer than reset for looking around history.
 
 If the commit id is invalid, Stolen Git prints:
 

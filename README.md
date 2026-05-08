@@ -90,6 +90,9 @@ stg reset
 
 ### Reset to a previous commit
 
+> [!WARNING]
+> `stg reset <commit_id>` is destructive. It moves the branch pointer back and can make later Stolen Git commits unreachable. Use `stg checkout -c <commit_id>` if you only want to inspect an older commit.
+
 ```sh
 stg log # shows all commits with commit_id next to the word commit in green
 stg reset <commit_id>

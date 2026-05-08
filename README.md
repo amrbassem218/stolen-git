@@ -37,7 +37,7 @@ For more detail on staging, committing, and reset behavior, see [COMMANDS.md](CO
    ruby -v
    ```
 
-   (If you don't have Ruby, visit [ruby-lang installation](https://www.ruby-lang.org/en/documentation/installation/) to get set up.)
+   (If you don't have Ruby, visit [ruby-lang installation](https://www.ruby-lang.org/en/documentation/installation/) to get set up. For windows visit [ruby windows installer](https://rubyinstaller.org/))
 
 2. Install the Gem  
    Run the following command in your terminal:

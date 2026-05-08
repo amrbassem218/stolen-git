@@ -128,6 +128,7 @@ module Actions
       # Assign index_obj
       default_index_obj = {}
       index[file_path] ||= default_index_obj
+
       index[file_path]['hash'] = file_hash
     end
 

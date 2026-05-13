@@ -9,6 +9,7 @@
 ## What is stolen git? \ Why?
 
 Stolen git is well... you get it. I'm building a mini git clone to learn version control and get comfortable with ruby.
+Honorable mention: @penguinencounter (most hostile-constructive comment)
 
 > [!NOTE]
 > Stolen-git runs on unix systems (mac, linux) or WSL on windows only. Native windows support is non-existent in the ruby world

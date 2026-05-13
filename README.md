@@ -9,6 +9,7 @@
 ## What is stolen git? \ Why?
 
 Stolen git is well... you get it. I'm building a mini git clone to learn version control and get comfortable with ruby.
+
 Honorable mention: @penguinencounter (most hostile-constructive comment)
 
 > [!NOTE]

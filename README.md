@@ -34,6 +34,13 @@ Run `stg init` once in a project before using the other commands. Stolen Git sto
 
 For more detail on staging, committing, and reset behavior, see [COMMANDS.md](COMMANDS.md).
 
+## TODO
+
+- Support binary files
+- Add Profile CRUD (create, read, update, delete)
+- Support merging branches & commits
+- Allow for simultaneous multiple contributions
+
 ## Installation
 
 1. Make sure you have Ruby installed on your system. You can check by running:
